@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дашборд</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            background-image: url('static/images/fon.jpg');
+            background-size: cover;
+            background-position: center;
+            font-family: 'Century Gothic', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #800020;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+        }
+
+        .dashboard-header h1 {
+            color: #800020;
+            font-size: 2em;
+            margin: 0;
+        }
+
+        .logout-button {
+            background-color: #800020;
+            color: lightgray;
+            padding: 12px 20px;
+            border-radius: 15px;
+            font-size: 1em;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .logout-button:hover {
+            background-color: #66001A;
+            transform: translateY(-5px);
+        }
+
+        .dashboard-content {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Century Gothic', sans-serif;
+            align-items: flex-start;
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        /* Всплывающее меню */
+        .dashboard-functions {
+            background-color: rgba(255, 255, 255, 0.4);
+            border-radius: 15px;
+            padding: 30px;
+            width: 270px;
+            margin-right: 40px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Центрируем элементы внутри */
+            gap: 20px;
+        }
+
+        .dashboard-functions h2 {
+            color: #800020;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .function-button {
+            background-color: #800020;
+            color: lightgray;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1em;
+            width: 100%;
+            max-width: 200px; /* Устанавливаем максимальную ширину кнопок */
+            text-align: center;
+            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+        }
+
+        .function-button:hover {
+            background-color: #66001A;
+            transform: translateY(-5px);
+        }
+
+        /* Список задач */
+        .dashboard-items {
+            background-color: rgba(255, 255, 255, 0.4);
+            border-radius: 15px;
+            padding: 30px;
+            font-family: 'Century Gothic', sans-serif;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            flex-grow: 1;
+        }
+
+        .dashboard-items h2 {
+            color: #800020;
+            margin-bottom: 20px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 1.8em;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background-color: rgba(255, 255, 255, 0.6);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        li strong {
+            color: #800020;
+        }
+
+        a {
+            text-decoration: none;
+            color: #800020;
+        }
+
+        .delete-button {
+            background-color: transparent;
+            font-family: 'Century Gothic';
+            color: #800020;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            font-size: 1.05em;
+
+            margin-left: 1px;
+        }
+
+        .delete-button:hover {
+            text-decoration: none;
+
+        }
+        a {
+            background-color: transparent;
+            font-family: 'Century Gothic';
+            color: #800020;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            font-size: 1.08em;
+
+            margin-left: 1px;
+        }
+
+
+            margin-left: 1px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Заголовок и кнопка выхода -->
+    <header class="dashboard-header">
+        <h1>Управляй своими задачами и стань эффективнее с Task Tracker</h1>
+        <a href="{{ url_for('logout') }}" class="logout-button">Выход</a>
+    </header>
+
+    <!-- Контент: Всплывающее меню и список задач -->
+    <div class="dashboard-content">
+        <!-- Всплывающее меню -->
+        <div class="dashboard-functions">
+            <h2>Меню</h2>
+            <a href="{{ url_for('create_task') }}" class="function-button">Создать задачу</a>
+            <a href="{{ url_for('tasks') }}" class="function-button">Список задач</a>
+            <a href="{{ url_for('calendar') }}" class="function-button">Календарь</a>
+            <a href="{{ url_for('chat', user_id=current_user.id) }}" class="function-button">Чат</a>
+            <a href="{{ url_for('reports') }}" class="function-button">Отчеты</a>
+        </div>
+
+        <!-- Список задач -->
+        <div class="dashboard-items">
+            <h2>Список задач</h2>
+            <ul>
+                {% for task in tasks %}
+                <li>
+                    <strong>Название:</strong> {{ task.title }}<br>
+                    <strong>Описание:</strong> {{ task.description }}<br>
+                    <strong>Приоритет:</strong> {{ task.priority }}<br>
+                    <strong>Сложность:</strong> {{ task.difficulty }}<br>
+                    <strong>Крайний срок:</strong> {{ task.due_date.strftime('%Y-%m-%d') }}<br>
+                    <strong>Исполнитель:</strong> {{ task.assigned_to.username if task.assigned_to else 'Не назначен' }}<br>
+                    <a href="{{ url_for('edit_task', task_id=task.id) }}">Редактировать</a>
+                    <form method="POST" action="{{ url_for('delete_task', task_id=task.id) }}" style="display:inline;">
+                        <button type="submit" class="delete-button" onclick="return confirm('Вы уверены, что хотите удалить задачу?');">Удалить</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

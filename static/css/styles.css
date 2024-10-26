@@ -1,0 +1,100 @@
+/* Общие стили */
+body {
+    font-family: 'Century Gothic', sans-serif;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    background-image: url('static/images/dashboard.jpg'); /* Фоновое изображение */
+    background-size: cover; /* Заставляет изображение покрывать весь фон */
+    background-position: center; /* Центрирует изображение */
+}
+
+/* Заголовки */
+h1, h2, h3, h4 {
+    color: #800020; /* Оранжевый цвет для заголовков */
+}
+
+/* Контейнер для формы */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh; /* Занимает всю высоту экрана */
+}
+
+/* Полупрозрачный фон для форм */
+.form-container {
+    background-color: rgba(255, 255, 255, 0.8); /* Полупрозрачный белый фон для формы */
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Тень для формы */
+    width: 100%; /* Ширина формы */
+    max-width: 600px; /* Максимальная ширина формы */
+}
+
+/* Стили для кнопок */
+button {
+    background-color: #800020; /* Оранжевый фон для кнопок */
+    color: lightgray;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%; /* Ширина кнопок */
+}
+
+button:hover {
+    background-color: #66001A; /* Темнее на наведении */
+}
+
+/* Стили для форм */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="date"],
+select,
+textarea {
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+    border-color: #800020; /* Подсветка полей ввода */
+}
+
+/* Стили для уведомлений */
+.flash {
+    padding: 10px;
+    background-color: #ff9999; /* Светло-красный для уведомлений */
+    color: #d8000c; /* Темно-красный текст */
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+/* Стили для сообщений чата */
+.message {
+    padding: 10px;
+    border-radius: 5px;
+    margin: 5px 0;
+}
+
+.message.sent {
+    background-color: #d1ffd1; /* Светло-зеленый для отправленных сообщений */
+    text-align: right;
+}
+
+.message.received {
+    background-color: #f1f1f1; /* Светло-серый для полученных сообщений */
+}

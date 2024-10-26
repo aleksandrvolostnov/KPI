@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание задачи</title>
+
+    <!-- Подключаем Choices.js -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+    <style>
+        body {
+            background-image: url('{{ url_for('static', filename='images/create_task.jpg') }}');
+            background-size: cover;
+            background-position: center;
+            font-family: 'Century Gothic', sans-serif;
+            color: #800020;
+            margin: 0;
+            padding: 0;
+            height: 110vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            margin-bottom:20px;
+            font-size: 32px;
+            text-align: center;
+        }
+
+        .form-container {
+            background-color: rgba(255, 255, 255, 0.0);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        input[type="text"],
+        input[type="date"],
+        .choices__inner {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid #800020;
+            border-radius: 10px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 16px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: black;
+        }
+
+        .button {
+            background-color: #800020;
+            color: lightgray;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'Century Gothic', sans-serif;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .button:hover {
+            background-color: #66001A;
+        }
+
+        .file-upload-button {
+            background-color: #800020;
+            color: lightgray;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 95%;
+            text-align: center;
+            display: block;
+            margin-bottom: 15px;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        .file-upload-button:hover {
+            background-color: #66001A;
+        }
+
+        .file-list {
+            list-style-type: none;
+            padding-left: 0;
+            text-align: center;
+        }
+
+        .file-list li {
+            color: #800020;
+            font-family: 'Century Gothic', sans-serif;
+            margin-bottom: 5px;
+        }
+
+        .file-list a {
+            color: #800020;
+            text-decoration: underline;
+            display: inline-block;
+        }
+
+        .file-list a:hover {
+            color: #66001A;
+        }
+
+        .flash {
+            color: red;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        menu {
+            background-color: #800020;
+            color: lightgray;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        menu:hover {
+            background-color: #66001A;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Создание задачи</h1>
+
+        <div class="form-container">
+            <form method="POST" action="{{ url_for('create_task') }}" enctype="multipart/form-data">
+                <input type="text" name="title" placeholder="Название задачи" required>
+                <input type="text" name="description" placeholder="Описание задачи" required>
+
+                <select name="priority" id="priority" required>
+                    <option value="">Выберите приоритет</option>
+                    <option value="Низкий">Низкий</option>
+                    <option value="Средний">Средний</option>
+                    <option value="Высокий">Высокий</option>
+                </select>
+
+                <input type="date" name="due_date" required>
+
+                <select name="difficulty" id="difficulty" required>
+                    <option value="">Выберите сложность</option>
+                    <option value="1">Легко</option>
+                    <option value="2">Средне</option>
+                    <option value="3">Сложно</option>
+                </select>
+
+                <select name="status" id="status" required>
+                    <option value="In Progress">В процессе</option>
+                    <option value="Completed">Выполнено</option>
+                </select>
+
+                <select name="assigned_to" id="assigned_to" required>
+                    <option value="">Выберите исполнителя</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+
+                <label class="file-upload-button" for="file-upload">Добавить файлы</label>
+                <input id="file-upload" type="file" name="task_files[]" multiple style="display:none;" onchange="updateFileList()">
+
+                <ul id="file-list" class="file-list"></ul>
+
+                <button type="submit" class="button">Создать задачу</button>
+            </form>
+
+            <menu href="{{ url_for('dashboard') }}">Меню</menu>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const elements = document.querySelectorAll('select');
+            elements.forEach(function (element) {
+                new Choices(element, {
+                    searchEnabled: false,
+                    itemSelectText: '',
+                });
+            });
+        });
+
+        function updateFileList() {
+            const input = document.getElementById('file-upload');
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = '';
+
+            for (let i = 0; i < input.files.length; i++) {
+                const file = input.files[i];
+                const listItem = document.createElement('li');
+                listItem.textContent = file.name;
+                fileList.appendChild(listItem);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Календарь задач</title>
+    <link rel="stylesheet" href="static/css/styles.css"> <!-- Относительный путь -->
+    <style>
+        body {
+            background-image: url('static/images/create_task.jpg');
+            background-size: cover; /* Заставляет изображение покрывать весь фон */
+            background-position: center; /* Центрирует изображение */
+            font-family: 'Century Gothic', Arial, sans-serif; /* Шрифт Century Gothic */
+            color: #800020; /* Оранжевый цвет текста */
+            margin: 0; /* Убираем отступы */
+            padding: 0; /* Убираем отступы */
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh; /* Занимает всю высоту экрана */
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 32px; /* Увеличиваем размер заголовка */
+            text-align: center; /* Центрируем заголовок */
+        }
+
+        .navigation {
+            margin: 20px 0; /* Отступы для навигации */
+            text-align: center; /* Центрируем навигацию */
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            background-color: rgba(255, 255, 255, 0.4); /* Полупрозрачный фон */
+            padding: 20px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .day {
+            background-color: rgba(255, 255, 255, 0.6); /* Полупрозрачный фон для дня */
+            border-radius: 10px;
+            padding: 10px;
+            position: relative;
+            min-height: 100px; /* Минимальная высота для ячейки */
+            transition: background-color 0.3s; /* Плавный переход цвета фона */
+        }
+
+        .day:hover {
+            background-color: #800020;
+            color: lightgray;/* Увеличиваем непрозрачность при наведении */
+        }
+
+        .day-header {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .task {
+            background-color: #800020; /* Оранжевый фон для задач */
+            color: lightgray; /* Белый текст задач */
+            border-radius: 5px;
+            padding: 5px;
+            margin-bottom: 5px;
+            text-align: center; /* Центрируем текст задачи */
+            transition: background-color 0.3s; /* Плавный переход фона */
+        }
+
+        .task:hover {
+            color: #800020; /* Белый текст задач */
+            background-color: #C0005E; /* Темный оранжевый при наведении */
+        }
+
+        .week-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .button {
+            background-color: #800020; /* Оранжевый фон кнопок */
+            color: lightgray; /* Белый текст кнопок */
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            margin: 0 5px;
+        }
+
+        .button:hover {
+            background-color: #66001A; /* Темнее оранжевый при наведении */
+        }
+
+        /* Кнопка в верхнем правом углу */
+        .dashboard-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #800020;
+            color: lightgray;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .dashboard-button:hover {
+            background-color: #66001A;
+        }
+    </style>
+</head>
+<body>
+    <!-- Кнопка "На дашборд" в верхнем правом углу -->
+    <a href="{{ url_for('dashboard') }}" class="dashboard-button">Меню</a>
+
+    <div class="container">
+        <h1>Календарь задач</h1>
+
+        <div class="navigation">
+            <a class="button" href="{{ url_for('calendar', month=previous_month, year=previous_year) }}">&#8249; Предыдущий месяц</a>
+            <span>{{ current_month_name }} {{ current_year }}</span>
+            <a class="button" href="{{ url_for('calendar', month=next_month, year=next_year) }}">Следующий месяц &#8250;</a>
+        </div>
+
+        <!-- Названия дней недели на русском -->
+        <div class="week-days">
+            <div>Пн</div>
+            <div>Вт</div>
+            <div>Ср</div>
+            <div>Чт</div>
+            <div>Пт</div>
+            <div>Сб</div>
+            <div>Вс</div>
+        </div>
+
+        <div class="calendar">
+            {% for week in calendar_days %}
+                {% for day in week %}
+                    <div class="day">
+                        {% if day.date %}
+                            <div class="day-header">{{ day.date.strftime('%d') }}<br>{{ day.date.strftime('%A') }}</div>
+                            {% for task in day.tasks %}
+                                <div class="task">
+                                    <a href="{{ url_for('edit_task', task_id=task.id) }}" style="color: lightgray; text-decoration: none;">
+                                        {{ task.title }}
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="day-header"></div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в Task Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: 'Century Gothic', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('static/images/fon.jpg');
+            background-size: cover;
+            background-position: center;
+            color: #800020;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .form-container {
+            background-color: rgba(255, 255, 255, 0.6);
+            padding: 30px 40px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-container h2 {
+            color: #800020;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .form-container input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(128, 0, 32, 0.4);
+            border-radius: 30px;
+            background-color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            font-family: 'Century Gothic', sans-serif;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-container input:focus {
+            border-color: #800020;
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.2);
+            outline: none;
+        }
+
+        .form-container button {
+            background-color: #800020;
+            color: lightgray;
+            padding: 15px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.1em;
+            width: 100%;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-container button:hover {
+            background-color: #66001A;
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-container a {
+            display: block;
+            color: #800020;
+            text-decoration: none;
+            margin-top: 15px;
+            font-size: 1em;
+        }
+
+        .form-container a:hover {
+            text-decoration: underline;
+        }
+
+        .flash {
+            color: red;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Вход в Task Tracker</h2>
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <input type="text" name="username" placeholder="Введите имя пользователя" required>
+            <input type="password" name="password" placeholder="Введите пароль" required>
+            <button type="submit">Войти</button>
+        </form>
+        <a href="{{ url_for('register') }}">Нет аккаунта? Зарегистрируйтесь</a>
+    </div>
+</body>
+</html>

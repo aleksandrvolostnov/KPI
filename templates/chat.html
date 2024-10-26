@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            background-image: url('{{ url_for('static', filename='images/tasks.jpg') }}');
+            background-size: cover;
+            background-position: center;
+            font-family: 'Century Gothic', sans-serif;
+            color: lightgray;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            display: flex;
+            width: 90%;
+            max-width: 1200px;
+            background-color: rgba(255, 255, 255, 0.0);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+            position: relative;
+        }
+
+        .menu-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: #800020;
+            color: lightgray;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+        }
+
+        .menu-button:hover {
+            background-color: #66001A;
+        }
+
+        .user-list {
+            background-color: rgba(255, 255, 255, 0.0);
+            border-radius: 15px;
+            padding: 20px;
+            width: 250px;
+            margin-right: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            color: #800020;
+        }
+
+        .user {
+            padding: 10px;
+            border-radius: 10px;
+            background-color: rgba(160, 160, 160, 0.8);
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .user:hover {
+            background-color: rgba(128, 0, 32, 0.7);
+        }
+
+        .notification-dot {
+            height: 10px;
+            width: 10px;
+            background-color: #66001A;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        .chat-window {
+            flex-grow: 1;
+            background-color: rgba(255, 255, 255, 0.0);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            max-height: 500px;
+        }
+
+        .message {
+            border-radius: 15px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            max-width: 60%;
+        }
+
+        .message.sent {
+            align-self: flex-end;
+            background-color: grey;
+            color: lightgray;
+        }
+
+        .message.sent .action-button {
+            background-color: #800020;
+            color: lightgray;
+        }
+
+        .message.received {
+            align-self: flex-start;
+            background-color: #800020;
+            color: lightgray;
+        }
+
+        .message.received .action-button {
+            background-color: grey;
+            color: lightgray;
+        }
+
+        .message-info {
+            font-size: 12px;
+            color: lightgray;
+            margin-bottom: 5px;
+        }
+
+        .message-parent {
+            font-size: 12px;
+            color: lightgray;
+            margin-bottom: 5px;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 2px solid rgba(128, 0, 32, 0.4);
+            border-radius: 10px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 16px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: lightgray;
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.2);
+            outline: none;
+        }
+
+        .send-button {
+            background-color: #800020;
+            color: lightgray;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .send-button:hover {
+            background-color: #66001A;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            font-size: 24px;
+            cursor: pointer;
+            color: #800020;
+            background-color: transparent;
+            border: none;
+        }
+
+        .file-label:hover {
+            color: #66001A;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 5px;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        .action-button {
+            background: linear-gradient(145deg, grey, #666666);
+            border: none;
+            color: lightgray;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 14px;
+            transition: background 0.4s, box-shadow 0.4s, transform 0.2s;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-button:hover {
+            background: linear-gradient(145deg, #a6a6a6, #4d4d4d);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .message.sent .action-button {
+            background: linear-gradient(145deg, #800020, #66001A);
+        }
+
+        .message.sent .action-button:hover {
+            background: linear-gradient(145deg, #990026, #4d0014);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .highlighted-message {
+            background-color: darkgray !important; /* Цвет выделенного сообщения */
+            transition: background-color 0.5s ease;
+        }
+
+        a {
+            color: lightgray;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .popup-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #800020;
+            color: lightgray;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Кнопка "Меню" для перехода на дэшборд -->
+    <a href="{{ url_for('dashboard') }}" class="menu-button">Меню</a>
+
+    <div class="container">
+        <!-- Список пользователей -->
+        <div class="user-list">
+            <h2>Пользователи</h2>
+            <div class="user" onclick="selectUser('group')">
+                <span>Общая группа</span>
+                <span class="last-message">...</span>
+            </div>
+            {% for user in users %}
+            <div class="user" onclick="selectUserForForward('{{ user.id }}')">
+                <span>{{ user.username }}</span>
+                <span class="last-message">
+                    {% set last_message = last_messages.get(user.id, 'Нет сообщений') %}
+                    {% if last_message and 'Файл' in last_message %}
+                        Файл
+                    {% else %}
+                        {{ last_message[:15] }}{% if last_message|length > 15 %}...{% endif %}
+                    {% endif %}
+                    {% if user_has_new_message[user.id] %}
+                        <span class="notification-dot"></span>
+                    {% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Окно чата -->
+        <div class="chat-window">
+            <h2>Чат с {{ chat_with }}</h2>
+            <div class="messages" id="messages">
+                {% for message in messages %}
+                <div class="message {% if message.sender_id == current_user.id %}sent{% else %}received{% endif %}" id="message-{{ message.id }}">
+                    {% if message.parent_message %}
+                    <div class="message-parent">
+                        Ответ на: <a href="#message-{{ message.parent_message.id }}" onclick="highlightMessage({{ message.parent_message.id }})">{{ message.parent_message.content[:15] }}...</a>
+                    </div>
+                    {% endif %}
+                    <div class="message-info">
+                         От: {{ message.sender.username }} | {{ message.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                    </div>
+                    <p id="message-{{ message.id }}">{{ message.content }}</p>
+                    {% if message.filename %}
+                    <p><a href="/uploads/{{ message.filename }}" target="_blank">Скачать файл: {{ message.filename }}</a></p>
+                    {% endif %}
+                    <div class="message-actions">
+                        <button class="action-button" onclick="replyMessage({{ message.id }})">Ответить</button>
+                        <button class="action-button" onclick="setForwardMessage({{ message.id }})">Переслать</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="input-group">
+                <input type="text" id="message-input" placeholder="Введите сообщение..." required>
+                <label for="file-input" class="file-label"> 📎 </label>
+                <input type="file" id="file-input" name="file">
+                <button class="send-button" onclick="sendMessage()">Отправить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentReplyMessageId = null;
+        let messageToForwardId = null;
+
+        function selectUser(userId) {
+            window.location.href = userId === 'group' ? '/chat/group' : `/chat/${userId}`;
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('message-input');
+            const fileInput = document.getElementById('file-input');
+            const message = messageInput.value;
+            const file = fileInput.files[0];
+
+            if (!message && !file) {
+                alert('Сообщение не может быть пустым');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('content', message);
+
+            if (currentReplyMessageId) {
+                formData.append('parent_message_id', currentReplyMessageId);
+            }
+
+            if (file) {
+                formData.append('file', file);
+            }
+
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    messageInput.value = '';
+                    fileInput.value = '';
+                    currentReplyMessageId = null;
+                    messageInput.placeholder = 'Введите сообщение...';
+                    window.location.reload();
+                } else {
+                    alert('Ошибка при отправке сообщения');
+                }
+            });
+        }
+
+        function replyMessage(messageId) {
+            currentReplyMessageId = messageId;
+            const messageInput = document.getElementById('message-input');
+            messageInput.placeholder = 'Ответ на сообщение...';
+            messageInput.focus();
+        }
+
+        function setForwardMessage(messageId) {
+            messageToForwardId = messageId;
+        }
+
+        function selectUserForForward(userId) {
+            if (messageToForwardId) {
+                fetch('/forward', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        message_id: messageToForwardId,
+                        recipient_id: userId
+                    })
+                }).then(response => {
+                    if (response.ok) {
+                        alert('Сообщение переслано.');
+                        messageToForwardId = null;
+                        window.location.href = `/chat/${userId}`;
+                    } else {
+                        alert('Ошибка при пересылке сообщения.');
+                    }
+                });
+            } else {
+                selectUser(userId);
+            }
+        }
+
+        function scrollToBottom() {
+            const messagesContainer = document.getElementById('messages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        window.onload = scrollToBottom;
+
+        // Обработка нажатия клавиши Enter для отправки сообщения
+        document.getElementById('message-input').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Функция для выделения сообщения при клике на ссылку
+        function highlightMessage(messageId) {
+            const messageElement = document.getElementById(`message-${messageId}`);
+            if (messageElement) {
+                messageElement.classList.add('highlighted-message');
+                setTimeout(() => {
+                    messageElement.classList.remove('highlighted-message');
+                }, 2000);  // Убираем выделение через 2 секунды
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчеты</title>
+
+    <!-- Подключаем Choices.js -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+    <style>
+        body {
+            background-image: url('{{ url_for('static', filename='images/tasks.jpg') }}');
+            background-size: cover;
+            background-position: center;
+            font-family: 'Century Gothic', sans-serif;
+            color: #800020;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.4);
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        h1, h2 {
+            color: #800020;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        p {
+            font-size: 1.1em;
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 20px;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        .button {
+            background-color: #800020;
+            color: lightgray;
+            padding: 12px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1em;
+            font-family: 'Century Gothic', sans-serif;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            width: 200px;
+            margin: 15px auto;
+            display: block;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:hover {
+            background-color: #66001A;
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .flash {
+            color: red;
+            margin-bottom: 15px;
+            text-align: center;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        .period-form {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .period-form label {
+            font-size: 1.2em;
+            color: #333;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        .period-form input,
+        .choices__inner {
+            width: 100%;
+            padding: 13px;
+            color: black;
+            border-radius: 10px;
+            border: 2px solid rgba(128, 0, 32, 0.4);
+            margin-bottom: 15px;
+            font-size: 1em;
+            font-family: 'Century Gothic', sans-serif;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Отчеты</h1>
+        </header>
+
+        <section>
+            <h2>Коэффициент Продуктивности (KPI)</h2>
+            <p><strong>Ваш KPI за весь период: {{ user_kpi | round(1) }}%</strong></p>
+        </section>
+
+        <section>
+            <p><strong>Общий KPI предприятия : {{ company_kpi | round(1) }}%</strong></p>
+        </section>
+
+        <section>
+            <h2>Скачивание отчета</h2>
+
+            <form method="POST" action="{{ url_for('download_report') }}" class="period-form">
+                <label for="start_date">Дата начала:</label>
+                <input type="date" name="start_date" id="start_date" required>
+
+                <label for="end_date">Дата окончания:</label>
+                <input type="date" name="end_date" id="end_date" required>
+
+                {% if current_user.role.role_name == 'Admin' %}
+                <label for="user_id">Выберите сотрудника:</label>
+                <select name="user_id" id="user_id">
+                    {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+
+                <button type="submit" class="button">Скачать отчет</button>
+            </form>
+        </section>
+
+        <footer>
+            <a href="{{ url_for('dashboard') }}" class="button">Меню</a>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const elements = document.querySelectorAll('select');
+            elements.forEach(function (element) {
+                new Choices(element, {
+                    searchEnabled: false,
+                    itemSelectText: '',
+                });
+            });
+        });
+    </script>
+</body>
+</html>

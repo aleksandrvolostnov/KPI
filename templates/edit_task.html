@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактирование задачи</title>
+
+    <!-- Подключаем Choices.js -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+    <style>
+        body {
+            background-image: url('{{ url_for('static', filename='images/edit_task.jpg') }}');
+            background-size: cover;
+            background-position: center;
+            font-family: 'Century Gothic', sans-serif;
+            color: #800020;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 32px;
+            text-align: center;
+        }
+
+        .form-container {
+            background-color: rgba(255, 255, 255, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        .choices__inner,
+        .button {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            color: black;
+            border: 2px solid rgba(128, 0, 32, 0.4);
+            border-radius: 10px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 16px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        .choices__inner:focus {
+            border-color: #800020;
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.2);
+            outline: none;
+        }
+
+        .button {
+            background-color: #800020;
+            color: lightgray;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #66001A;
+        }
+
+        .flash {
+            color: red;
+            margin-bottom: 15px;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        .choices__list--dropdown .choices__item--selectable:hover {
+            background-color: lightgray;
+            color: #800020;
+        }
+
+        /* Кнопка для загрузки файлов на всю ширину и по центру */
+        .file-upload-button {
+            background-color: #800020;
+            color: lightgray;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 95%;
+            text-align: center;
+            display: block;
+            margin-bottom: 15px;
+        }
+
+        .file-upload-button:hover {
+            background-color: #66001A;
+        }
+
+        .file-list {
+            list-style-type: none;
+            padding-left: 0;
+            text-align: center;
+        }
+
+        .file-list li {
+            color: #66001A;
+            font-family: 'Century Gothic',  sans-serif;
+            border: none;
+            margin-bottom: 5px;
+        }
+
+        .file-list a {
+            color: #66001A;
+            text-decoration: underline;
+            display: inline-block;
+        }
+
+        .file-list a:hover {
+            color: #66001A;
+        }
+
+        .delete-button {
+            color: #800020;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+
+        .delete-button:hover {
+            color: #66001A;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Редактирование задачи</h1>
+
+        <div class="form-container">
+            <form method="POST" action="{{ url_for('edit_task', task_id=task.id) }}" enctype="multipart/form-data">
+                <input type="text" name="title" placeholder="Название задачи" value="{{ task.title }}" required>
+                <input type="text" name="description" placeholder="Описание задачи" value="{{ task.description }}" required>
+
+                <select id="priority" name="priority" required>
+                    <option value="">Выберите приоритет</option>
+                    <option value="Низкий" {% if task.priority == 'Низкий' %}selected{% endif %}>Низкий</option>
+                    <option value="Средний" {% if task.priority == 'Средний' %}selected{% endif %}>Средний</option>
+                    <option value="Высокий" {% if task.priority == 'Высокий' %}selected{% endif %}>Высокий</option>
+                </select>
+
+                <input type="date" name="due_date" value="{{ task.due_date.strftime('%Y-%m-%d') }}" required>
+
+                <select id="difficulty" name="difficulty" required>
+                    <option value="">Выберите уровень сложности</option>
+                    <option value="1" {% if task.difficulty == 1 %}selected{% endif %}>Легко</option>
+                    <option value="2" {% if task.difficulty == 2 %}selected{% endif %}>Средне</option>
+                    <option value="3" {% if task.difficulty == 3 %}selected{% endif %}>Сложно</option>
+                </select>
+
+                <select id="assigned_to" name="assigned_to" required>
+                    <option value="">Выберите исполнителя</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}" {% if task.assigned_to_id == user.id %}selected{% endif %}>{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+
+                <select id="status" name="status" required>
+                    <option value="In Progress" {% if task.status == 'In Progress' %}selected{% endif %}>В процессе</option>
+                    <option value="Completed" {% if task.status == 'Completed' %}selected{% endif %}>Выполнено</option>
+                </select>
+
+                <!-- Кнопка для загрузки файлов на всю ширину и по центру -->
+                <label class="file-upload-button" for="file-upload">Выберите файлы</label>
+                <input id="file-upload" type="file" name="task_files[]" multiple style="display:none;" onchange="updateFileList()">
+
+                <!-- Список загруженных файлов -->
+                <ul id="file-list" class="file-list">
+                    <li><strong>Загруженные файлы:</strong></li>
+                    {% if files %}
+                        {% for file in files %}
+                        <li>
+                            <a href="{{ url_for('download_file', filename=file.filename) }}" target="_blank">{{ file.filename }}</a>
+                            <span class="delete-button" onclick="deleteFile({{ file.id }})">Удалить</span>
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <li>Файлы не загружены.</li>
+                    {% endif %}
+                </ul>
+
+                <button type="submit" class="button">Сохранить изменения</button>
+            </form>
+
+            <form action="{{ url_for('dashboard') }}">
+                <button type="submit" class="button">Меню</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Инициализация Choices.js -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const elements = document.querySelectorAll('select');
+            elements.forEach(function (element) {
+                new Choices(element, {
+                    searchEnabled: false,
+                    itemSelectText: '',
+                });
+            });
+        });
+
+        function updateFileList() {
+            const input = document.getElementById('file-upload');
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = '';
+
+            for (let i = 0; i < input.files.length; i++) {
+                const file = input.files[i];
+                const listItem = document.createElement('li');
+                listItem.textContent = file.name;
+                fileList.appendChild(listItem);
+            }
+        }
+
+        function deleteFile(fileId) {
+            if (confirm('Вы уверены, что хотите удалить этот файл?')) {
+                fetch(`/delete_file/${fileId}`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            window.location.reload();
+                        } else {
+                            alert('Ошибка при удалении файла.');
+                        }
+                    })
+                    .catch(error => {
+                        alert('Ошибка при удалении файла.');
+                    });
+            }
+        }
+    </script>
+</body>
+</html>

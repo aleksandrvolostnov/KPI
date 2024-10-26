@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добро пожаловать в Task Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            background-image: url('static/images/fon.jpg');
+            background-size: cover;
+            background-position: center;
+            font-family: 'Century Gothic', sans-serif;
+            color: #800020;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center; /* Центрируем по горизонтали */
+        }
+
+        h1 {
+            margin-top: 30px;
+            font-size: 2.5em;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #800020;
+            text-align: center;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        p {
+            font-size: 1.2em;
+            text-align: center;
+            margin-bottom: 10px;
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        .button-container {
+            background-color: rgba(255, 255, 255, 0.6);
+            padding: 20px 40px;
+            border-radius: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* Отступ между кнопками */
+            align-items: center; /* Центрируем кнопки внутри контейнера */
+            margin: auto; /* Контейнер будет центрироваться */
+        }
+
+        .button {
+            background-color: #800020;
+            color: lightgray;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            font-size: 1.1em;
+            width: 100%; /* Кнопки занимают всю ширину контейнера */
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:hover {
+            background-color: #66001A;
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .app-info {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            color: #800020;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            animation: fadeIn 2.5s ease-in-out;
+        }
+
+        section p {
+            font-size: 1.2em;
+            color: #800020;
+            max-width: 700px;
+            margin: 0 auto;
+            animation: fadeIn 3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%; /* Контейнер для центрирования по высоте */
+        }
+    </style>
+</head>
+<body>
+    <!-- Верхний текст -->
+    <header>
+        <h1>Добро пожаловать в Task Tracker</h1>
+        <p>Управляйте своими задачами и повышайте продуктивность с лёгкостью.</p>
+    </header>
+
+    <!-- Контейнер для кнопок в центре -->
+    <div class="content-container">
+        <nav class="button-container">
+            <a href="{{ url_for('login') }}" class="button">Войти</a>
+            <a href="{{ url_for('register') }}" class="button">Зарегистрироваться</a>
+        </nav>
+    </div>
+
+    <!-- Нижний текст о приложении -->
+    <section>
+        <h2 class="app-info">О приложении</h2>
+        <p>
+            Task Tracker — это удобный инструмент для управления задачами, который поможет вам организовать свою работу.
+            Вы можете создавать, редактировать и удалять задачи, устанавливать сроки, а также общаться с коллегами.
+            Приложение также позволяет отслеживать вашу продуктивность и получать отчеты о выполненных задачах.
+        </p>
+    </section>
+</body>
+</html>
