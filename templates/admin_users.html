@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление пользователями</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+    <style>
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            font-family: 'Century Gothic', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            background-color: var(--secondary-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            font-weight: normal;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--primary-bg);
+        }
+
+        th {
+            background-color: var(--text-color);
+            color: var(--primary-bg);
+            font-weight: normal;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--primary-bg);
+        }
+
+        /* Кнопка "Назад" */
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-color);
+            font-size: 1.2em;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            background-color: var(--secondary-bg);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .back-button i {
+            font-size: 1.2em;
+        }
+
+        .back-button:hover {
+            background-color: var(--secondary-bg);
+            color: var(--primary-bg);
+            transform: translateX(-5px);
+        }
+
+        /* Кнопка "Удалить" */
+        .delete-button {
+            background-color: var(--accent-color);
+            color: #d3d3d3;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        .delete-button:hover {
+            background-color: darkred;
+            transform: translateY(-2px);
+        }
+
+        /* Стили для Choices.js */
+.choices {
+    width: 100px;
+    height: 35px;
+    background-color: var(--secondary-bg) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--text-color);
+    border-radius: 5px;
+    font-family: 'Century Gothic', sans-serif;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Исправление цвета фона и текста при открытии */
+.choices__list--dropdown, .choices__list[aria-expanded] {
+    background-color: #A4161A;
+    border: 1px solid var(--text-color);
+    border-radius: 5px;
+}
+
+.choices__item {
+    color: var(--text-color);
+    text-align: center;
+}
+
+.choices__inner {
+    min-height: 35px !important;
+    height: 35px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--secondary-bg) !important;
+    border: 1px solid var(--text-color) !important;
+    border-radius: 5px;
+    font-size: 14px;
+    padding: 0 !important; /* Убираем лишние отступы */
+    transition: none !important; /* Убираем анимацию изменения высоты */
+}
+
+.choices__list--single {
+    padding: 4px 8px !important;
+    height: 100% !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Чтобы при выборе не менялся размер */
+.choices[data-type*="select-one"] .choices__inner {
+    height: 35px !important;
+    min-height: 35px !important;
+}
+
+/* Убираем изменение высоты при фокусе */
+.choices[data-type*="select-one"].is-open .choices__inner {
+    height: 35px !important;
+}
+
+/* Элементы списка */
+.choices__list--dropdown .choices__item--selectable {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+    padding: 8px;
+    border-radius: 3px;
+    text-align: center;
+}
+
+/* Hover-эффект */
+.choices__list--dropdown .choices__item--selectable:hover {
+    background-color: #6ABFB1;
+    color: var(--primary-bg);
+}
+
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--secondary-bg);
+            color: var(--primary-bg);
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .toast.show {
+            display: block;
+            opacity: 1;
+        }
+        /* Поле ввода пароля */
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 8px;
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            border: 1px solid var(--text-color);
+            border-radius: 5px;
+            font-family: Century Gothic, sans-serif;
+            resize: none;
+            font-size: 16px;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: var(--text-color);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 8px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+
+.username-input {
+    width: 100%;
+    padding: 8px;
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+    border: 1px solid var(--text-color);
+    border-radius: 5px;
+    font-family: 'Century Gothic', sans-serif;
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+.username-input:focus {
+    outline: none;
+    border-color: #6ABFB1;
+}
+
+
+    </style>
+    {% extends 'base.html' %}
+    {% block title %}Дашборд{% endblock %}
+{% block content %}
+</head>
+<body>
+<div style="text-align: right; margin-top: 10px; margin-right: 30px;">
+    <a href="{{ url_for('create_user_admin') }}" class="back-button" style="background-color: #264653;">
+        <i class="fas fa-user-plus"></i> Добавить пользователя
+    </a>
+</div>
+    <div class="container">
+        <h1>Управление пользователями</h1>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Имя</th>
+                <th>Email</th>
+                <th>Роль</th>
+                <th>Пароль</th>
+                <th>Действия</th>
+            </tr>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td><input type="text"
+                    class="username-input"
+                    value="{{ user.username }}"
+                    onchange="updateUsername({{ user.id }}, this.value)">
+                </td>
+                <td>{{ user.email or "Не указано" }}</td>
+                <td>
+                    <select class="role-select" data-user-id="{{ user.id }}">
+                        {% for role in roles %}
+                        <option value="{{ role.id }}" {% if user.role_id == role.id %}selected{% endif %}>
+                            {{ role.role_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+    <div class="password-container">
+        <input type="password" class="password-input" id="password-{{ user.id }}"
+               value="{{ user.password }}" oninput="updatePassword({{ user.id }})">
+        <i class="fas fa-eye toggle-password" onclick="togglePassword({{ user.id }})"></i>
+    </div>
+</td>
+
+                <td>
+                    <form method="post" action="{{ url_for('delete_user', user_id=user.id) }}"
+                          onsubmit="return confirm('Удалить пользователя?');">
+                        <button type="submit" class="delete-button">Удалить</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+
+
+
+    <div id="toast" class="toast"></div>
+{% endblock %}
+    {% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Применяем Choices.js к каждому селекту
+            document.querySelectorAll('.role-select').forEach(select => {
+                new Choices(select, {
+                    searchEnabled: false,
+                    itemSelectText: '',
+                });
+
+                select.addEventListener('change', function() {
+                    let userId = this.dataset.userId;
+                    let newRoleId = this.value;
+                    let toast = document.getElementById('toast');
+
+                    fetch(`/admin_user/${userId}/update_role`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role_id: newRoleId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            showToast(`Роль обновлена: ${data.message}`, 'success');
+                        } else {
+                            showToast(`Ошибка: ${data.message}`, 'error');
+                        }
+                    })
+                    .catch(error => showToast(`Ошибка запроса: ${error}`, 'error'));
+                });
+            });
+        });
+            function updatePassword(userId) {
+            let newPassword = document.getElementById(`password-${userId}`).value;
+
+            fetch(`/admin_user/${userId}/update_password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: newPassword })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast('Пароль обновлен', 'success');
+                } else {
+                    showToast(`Ошибка: ${data.message}`, 'error');
+                }
+            })
+            .catch(error => showToast(`Ошибка запроса: ${error}`, 'error'));
+        }
+
+        function togglePassword(userId) {
+            let input = document.getElementById(`password-${userId}`);
+            let icon = input.nextElementSibling;
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+            }
+        }
+
+        function showToast(message, type) {
+            let toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.backgroundColor = type === 'success' ? '#d3d3d3' : '#A4161A';
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+        function updateUsername(userId, newUsername) {
+    fetch(`/admin_user/${userId}/update_name`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: newUsername })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showToast(data.message, 'success');
+        } else {
+            showToast(data.message, 'error');
+        }
+    });
+}
+document.getElementById('new-user-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    fetch('/admin_user/create', {
+        method: 'POST',
+        body: JSON.stringify(Object.fromEntries(formData.entries())),
+        headers: { 'Content-Type': 'application/json' }
+    }).then(res => res.json())
+      .then(data => {
+          if (data.status === 'success') {
+              location.reload();
+          } else {
+              showToast(data.message, 'error');
+          }
+      });
+});
+    </script>
+{% endblock %}
+</body>
+</html>

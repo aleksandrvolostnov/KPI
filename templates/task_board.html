@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Доска задач - {{ board_type }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* Основной стиль */
+        body {
+            font-family: 'Century Gothic', sans-serif;
+            font-weight: normal;
+            margin: 0;
+            padding: 0;
+            background-color: var(--primary-bg);;
+            color: var(--text-color);
+            background-size: cover; /* Изображение покрывает весь экран */
+            background-position: center; /* Центрируем изображение */
+            background-attachment: fixed; /* Фиксируем фон при прокрутке */
+        }
+
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+        }
+
+        .dashboard-header h1 {
+            color: var(--text-color);
+            font-size: 2em;
+            font-family: 'Century Gothic', sans-serif; /* Применяем шрифт Century Gothic */
+            font-weight: normal;
+            margin: 0;
+            margin-left: 515px;
+        }
+        .dashboard-button {
+            background-color: #d3d3d3;
+            color: #161A1D;
+            padding: 12px 20px;
+            border-radius: 15px;
+            font-size: 1em;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .dashboard-button:hover {
+            background-color: #161A1D;
+            color: #d3d3d3;
+            transform: translateY(-5px);
+        }
+
+
+        /* Кнопки сверху колонок */
+        .board-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .board-buttons a {
+            padding: 10px 20px;
+            color: var(--text-color);
+            background-color: var(--hover-color);
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: normal;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .board-buttons a:hover {
+            background-color: var(--accent-color);
+            color: color: var(--text-color);
+            transform: translateY(-3px);
+        }
+
+        /* Контейнер доски */
+        .board {
+            display: flex;
+            justify-content: center; /* Центрируем колонки */
+            gap: 20px;
+            padding: 20px 40px;
+            gap: 30px; /* Увеличиваем расстояние между колонками */
+            border-left: 1px solid var(--primary-bg);
+            border-right: 1px solid var(--primary-bg);
+            padding: 20px;
+        }
+
+        /* Колонки */
+        .column {
+            background-color: var(--primary-bg);
+            border-radius: 15px;
+            padding: 20px;
+            width: 320px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            border-top: 8px solid transparent; /* Индикатор цвета */
+        }
+        .column {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .column:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Цветовые индикаторы для колонок */
+        .column.in-progress {
+            border-top-color: #F3A57A; /* Оранжевый */
+        }
+
+        .column.completed {
+            border-top-color: #6ABFB1; /* Зеленый */
+        }
+
+        .column.overdue {
+            border-top-color: #F05A4F; /* Красный */
+        }
+
+        .column.low-priority {
+            border-top-color: #ADD8E6; /* Желтый */
+        }
+
+        .column.medium-priority {
+            border-top-color: #FF8C00; /* Голубой */
+        }
+
+        .column.high-priority {
+            border-top-color: #DC143C; /* Малиновый */
+        }
+        .column.low-difficulty {
+            border-top-color: #90EE90; /* Желтый */
+        }
+
+        .column.medium-difficulty {
+            border-top-color: #FFD700; /* Голубой */
+        }
+
+        .column.high-difficulty {
+            border-top-color: #B22222; /* Малиновый */
+        }
+
+        .column h3 {
+            font-size: 1.8em;
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3C3C3C; /* Цвет подчеркивания */
+            padding-bottom: 10px;
+            font-weight: normal;
+        }
+        .column.in-progress h3 {
+    border-bottom: 2px solid #F3A57A; /* Оранжевый для "В работе" */
+}
+
+.column.completed h3 {
+    border-bottom: 2px solid #6ABFB1; /* Зеленый для "Выполненные" */
+}
+
+.column.overdue h3 {
+    border-bottom: 2px solid #F05A4F; /* Красный для "Просроченные" */
+}
+
+.column.low-priority h3 {
+    border-bottom: 2px solid #ADD8E6; /* Голубой для низкого приоритета */
+}
+
+.column.medium-priority h3 {
+    border-bottom: 2px solid #FF8C00; /* Оранжевый для среднего приоритета */
+}
+
+.column.high-priority h3 {
+    border-bottom: 2px solid #DC143C; /* Малиновый для высокого приоритета */
+}
+
+.column.low-difficulty h3 {
+    border-bottom: 2px solid #90EE90; /* Светло-зеленый для лёгкой сложности */
+}
+
+.column.medium-difficulty h3 {
+    border-bottom: 2px solid #FFD700; /* Желтый для средней сложности */
+}
+
+.column.high-difficulty h3 {
+    border-bottom: 2px solid #B22222; /* Тёмно-красный для высокой сложности */
+}
+
+
+        /* Задачи */
+        .tasks {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .task {
+    background: var(--primary-bg);
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border: 2px solid transparent; /* Изначально рамка прозрачная */
+    transition: all 0.3s ease;
+}
+
+/* Тени и рамки задач в зависимости от категории */
+.column.in-progress .task {
+    border-color: #F3A57A; /* Оранжевая рамка для задач в работе */
+    box-shadow: 0 4px 10px rgba(243, 165, 122, 0.6); /* Соответствующая тень */
+}
+
+.column.completed .task {
+    border-color: #6ABFB1; /* Зелёная рамка для выполненных задач */
+    box-shadow: 0 4px 10px rgba(106, 191, 177, 0.6);
+}
+
+.column.overdue .task {
+    border-color: #F05A4F; /* Красная рамка для просроченных задач */
+    box-shadow: 0 4px 10px rgba(240, 90, 79, 0.6);
+}
+
+.column.low-priority .task {
+    border-color: #ADD8E6; /* Голубая рамка для низкого приоритета */
+    box-shadow: 0 4px 10px rgba(173, 216, 230, 0.6);
+}
+
+.column.medium-priority .task {
+    border-color: #FF8C00; /* Оранжевая рамка для среднего приоритета */
+    box-shadow: 0 4px 10px rgba(255, 140, 0, 0.6);
+}
+
+.column.high-priority .task {
+    border-color: #DC143C; /* Красная рамка для высокого приоритета */
+    box-shadow: 0 4px 10px rgba(220, 20, 60, 0.6);
+}
+
+.column.low-difficulty .task {
+    border-color: #90EE90; /* Светло-зелёная рамка для лёгких задач */
+    box-shadow: 0 4px 10px rgba(144, 238, 144, 0.6);
+}
+
+.column.medium-difficulty .task {
+    border-color: #FFD700; /* Жёлтая рамка для средних задач */
+    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.6);
+}
+
+.column.high-difficulty .task {
+    border-color: #B22222; /* Тёмно-красная рамка для сложных задач */
+    box-shadow: 0 4px 10px rgba(178, 34, 34, 0.6);
+}
+
+/* Тень при наведении на задачи в зависимости от категории колонки */
+.column.in-progress .task:hover {
+    box-shadow: 0 6px 15px rgba(243, 165, 122, 0.8); /* Оранжевая тень */
+}
+
+.column.completed .task:hover {
+    box-shadow: 0 6px 15px rgba(106, 191, 177, 0.8); /* Зеленая тень */
+}
+
+.column.overdue .task:hover {
+    box-shadow: 0 6px 15px rgba(240, 90, 79, 0.8); /* Красная тень */
+}
+
+.column.low-priority .task:hover {
+    box-shadow: 0 6px 15px rgba(173, 216, 230, 0.8); /* Голубая тень */
+}
+
+.column.medium-priority .task:hover {
+    box-shadow: 0 6px 15px rgba(255, 140, 0, 0.8); /* Оранжевая тень */
+}
+
+.column.high-priority .task:hover {
+    box-shadow: 0 6px 15px rgba(220, 20, 60, 0.8); /* Красная тень */
+}
+
+.column.low-difficulty .task:hover {
+    box-shadow: 0 6px 15px rgba(144, 238, 144, 0.8); /* Зеленая тень */
+}
+
+.column.medium-difficulty .task:hover {
+    box-shadow: 0 6px 15px rgba(255, 215, 0, 0.8); /* Желтая тень */
+}
+
+.column.high-difficulty .task:hover {
+    box-shadow: 0 6px 15px rgba(178, 34, 34, 0.8); /* Тёмно-красная тень */
+}
+
+
+
+        /* Цвет тени при наведении */
+        .task:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px lightgray; /* Индиго при наведении */
+            background: linear-gradient(135deg, var(--primary-bg), var(--secondary-bg));
+        }
+
+        .task h4 {
+            font-size: 1.4em;
+            margin: 0 0 10px;
+            color: var(--text-color);
+            font-weight: normal;
+        }
+
+        .task p {
+            font-size: 1em;
+            margin: 5px 0;
+            color: var(--text-color);
+            font-weight: normal;
+        }
+
+        .task strong {
+            color: var(--text-color);
+            font-weight: normal;
+        }
+        .column.dragover {
+            border: 2px dashed #6ABFB1; /* Зелёная пунктирная рамка */
+            background-color: #f0f8ff; /* Лёгкий голубой фон */
+            transition: all 0.3s ease-in-out;
+        }
+        .task.dragging {
+            opacity: 0.9;
+            transform: rotate(-0deg) scale(1.02);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
+    </style>
+    {% extends 'base.html' %}
+    {% block title %}Дашборд{% endblock %}
+{% block content %}
+</head>
+<body>
+    <header class="dashboard-header">
+        <h1>Доска задач - {{ board_type }}</h1>
+    </header>
+
+    <!-- Кнопки сверху колонок -->
+    <div class="board-buttons">
+        <a href="{{ url_for('task_board') }}"><i class="fas fa-tasks"></i> Готовность</a>
+        <a href="{{ url_for('task_board_priority') }}"><i class="fas fa-flag"></i> Приоритет</a>
+        <a href="{{ url_for('task_board_difficulty') }}"><i class="fas fa-layer-group"></i> Сложность</a>
+    </div>
+
+    <!-- Колонки доски -->
+    <div class="board">
+        {% for category, tasks in tasks_by_category.items() %}
+        <div
+            class="column {% if category == 'В работе' %}in-progress{% elif category == 'Выполненные' %}completed{% elif category == 'Просроченные' %}overdue{% elif category == 'Низкий' %}low-priority{% elif category == 'Средний' %}medium-priority{% elif category == 'Высокий' %}high-priority{% elif category == 'Меньше 2 часов' %}low-difficulty{% elif category == 'От 2 до 8 часов' %}medium-difficulty{% elif category == 'Более 8 часов' %}high-difficulty{% endif %}"
+            ondragover="handleDragOver(event)"
+            ondragenter="handleDragEnter(event)"
+            ondragleave="handleDragLeave(event)"
+            ondrop="handleDrop(event, '{{ category }}')">
+
+            <h3>{{ category }}</h3>
+            <div class="tasks">
+                {% for task in tasks %}
+                <div
+                    class="task"
+                    draggable="true"
+                    onclick="location.href='{{ url_for('edit_task', task_id=task.id) }}'"
+                    ondragstart="handleDragStart(event)"
+                    data-task-id="{{ task.id }}">
+                    <h4>{{ task.title }}</h4>
+                    <p><strong>Описание:</strong> {{ task.description }}</p>
+                    <p><strong>Приоритет:</strong> {{ task.priority }}</p>
+                    <p><strong>Сложность:</strong> {{ task.difficulty }}</p>
+                    <p><strong>Срок:</strong> {{ task.due_date.strftime('%d-%m-%Y') }}</p>
+                    <p><strong>Ответственный:</strong> {{ task.assigned_to.username }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}
+    {% block extra_js %}
+    <script>
+    let draggedTaskId = null;
+
+    function handleDragStart(event) {
+        draggedTaskId = event.target.getAttribute('data-task-id');
+        event.target.classList.add('dragging'); // Добавляем класс для визуализации
+    }
+
+    function handleDragOver(event) {
+        event.preventDefault();
+    }
+
+    function handleDragEnter(event) {
+        const column = event.target.closest('.column');
+        if (column) {
+            column.classList.add('dragover'); // Подсвечиваем колонку
+        }
+    }
+
+    function handleDragLeave(event) {
+        const column = event.target.closest('.column');
+        if (column) {
+            column.classList.remove('dragover'); // Убираем подсветку колонки
+        }
+    }
+    function handleDragStart(event) {
+    draggedTaskId = event.target.getAttribute('data-task-id');
+    event.target.classList.add('dragging');
+}
+
+function handleDragEnd(event) {
+    event.target.classList.remove('dragging');
+}
+
+
+    function handleDrop(event, targetCategory) {
+        event.preventDefault();
+
+        const column = event.target.closest('.column');
+        if (column) {
+            column.classList.remove('dragover'); // Убираем подсветку
+        }
+
+        // Отправляем данные на сервер для обновления категории задачи
+        fetch('/update_task_category', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                task_id: draggedTaskId,
+                new_category: targetCategory
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Перезагружаем страницу для отображения изменений
+            } else {
+                console.error('Ошибка:', data.error);
+            }
+        });
+    }
+
+    function handleDragEnd(event) {
+        event.target.classList.remove('dragging'); // Убираем класс для визуализации
+    }
+</script>
+{% endblock %}
+</body>
+</html>

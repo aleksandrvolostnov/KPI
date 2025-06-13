@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список задач</title>
+
+    <!-- Подключаем Choices.js -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+    <style>
+        body {
+            background-size: cover;
+            background-position: center;
+            font-family: 'Century Gothic', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 32px;
+            text-align: center;
+            font-family: 'Century Gothic', sans-serif; /* Применяем шрифт Century Gothic */
+            font-weight: normal;
+        }
+
+        .filter-form {
+            margin-bottom: 20px;
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 600px;
+            font-weight: normal;
+        }
+
+        /* Стили для элементов input и select */
+        .filter-form input[type="text"],
+        .filter-form input[type="date"],
+        .choices__inner {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--secondary-bg);
+            margin-bottom: 17px;
+            border: 2px solid #3C3C3C;
+            border-radius: 10px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 18px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-sizing: border-box;
+            font-weight: normal;
+            color: var(--text-color);
+        }
+
+        .filter-form button {
+            background-color: var(--text-color);
+            color: var(--primary-bg);
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'Century Gothic', sans-serif;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+
+        .filter-form button:hover {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+        }
+
+
+        .tasks-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+            color: var(--primary-bg);
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 1000px;
+            font-weight: normal;
+            text-align: center;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid color: var(--text-color);;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        th {
+            background-color: #2A2F34;
+            color: #d3d3d3;
+            font-weight: normal;
+            font-size: 1em;
+            text-align: center;
+        }
+
+        td {
+            color: #2A2F34;
+            border-color: #2A2F34;
+            text-align: center;
+        }
+
+        tr:hover td {
+            background-color: #2A2F34;
+            color: #d3d3d3;
+        }
+
+
+        .choices__list .choices__item:hover {
+        background-color: var(--secondary-bg) !important;
+        color: var(--accent-color) !important;
+        border: none !important;
+    }
+            .choices__list .choices__item {
+        background-color: var(--secondary-bg) !important;
+        color: var(--text-color) !important;
+        border: none !important;
+    }
+
+
+        /* Кликабельные строки */
+        .clickable-row {
+            cursor: pointer;
+        }
+    </style>
+    {% extends 'base.html' %}
+    {% block title %}Дашборд{% endblock %}
+{% block content %}
+</head>
+<body>
+    <div class="container">
+        <h1>Список задач</h1>
+
+        <div class="filter-form">
+            <form method="POST" action="{{ url_for('tasks') }}">
+                <input type="text" name="title" placeholder="Название задачи" value="{{ request.form.get('title') or '' }}">
+
+                <select name="assigned_to" id="assigned_to">
+                    <option value="">Выберите сотрудника</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}" {% if request.form.get('assigned_to') == user.id %}selected{% endif %}>
+                    {{ user.username }}
+                     </option>
+                    {% endfor %}
+                </select>
+
+                <input type="date" name="due_date" placeholder="Крайний срок" value="{{ request.form.get('due_date') }}">
+
+                <select name="priority" id="priority">
+                    <option value="">Выберите приоритет</option>
+                    <option value="Низкий" {% if request.form.get('priority') == 'Низкий' %}selected{% endif %}>Низкий приоритет (не срочный)</option>
+                    <option value="Средний" {% if request.form.get('priority') == 'Средний' %}selected{% endif %}>Средний приоритет (важный)</option>
+                    <option value="Высокий" {% if request.form.get('priority') == 'Высокий' %}selected{% endif %}>Высокий приоритет (критический)</option>
+                </select>
+
+                <select name="status" id="status">
+                    <option value="">Выберите статус</option>
+                    <option value="In Progress" {% if request.form.get('status') == 'In Progress' %}selected{% endif %}>В процессе</option>
+                    <option value="Completed" {% if request.form.get('status') == 'Completed' %}selected{% endif %}>Завершена</option>
+                    <option value="Просрочено" {% if request.form.get('status') == 'Просрочено' %}selected{% endif %}>Просрочено</option>
+                </select>
+
+                <select name="difficulty" id="difficulty">
+                    <option value="">Выберите уровень сложности</option>
+                    <option value="1" {% if request.form.get('difficulty') == '1' %}selected{% endif %}>Краткосрочные (до 2 часов)</option>
+                    <option value="2" {% if request.form.get('difficulty') == '2' %}selected{% endif %}>Среднесрочные (от 2 до 8 часов)</option>
+                    <option value="3" {% if request.form.get('difficulty') == '3' %}selected{% endif %}>Долгосрочные (более 8 часов)</option>
+                </select>
+
+                <button type="submit" class="button">Применить фильтр</button>
+            </form>
+        </div>
+
+        <table class="tasks-table">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Описание</th>
+                    <th>Приоритет</th>
+                    <th>Статус</th>
+                    <th>Сложность</th>
+                    <th>Крайний срок</th>
+                    <th>Исполнитель</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr class="clickable-row" onclick="window.location.href='{{ url_for('edit_task', task_id=task.id) }}'">
+                    <td>{{ task.title }}</td>
+                    <td>{{ task.description }}</td>
+                    <td>{{ task.priority }}</td>
+                    <td>{{ task.status }}</td>
+                    <td>{{ task.difficulty }}</td>
+                    <td>{{ task.due_date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ task.assigned_to.username if task.assigned_to else 'Не назначен' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+    {% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const elements = document.querySelectorAll('select');
+            elements.forEach(function (element) {
+                new Choices(element, {
+                    searchEnabled: false,
+                    itemSelectText: '',
+                });
+            });
+        });
+    </script>
+{% endblock %}
+</body>
+</html>

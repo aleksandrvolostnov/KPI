@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AtomFlow{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    {% block extra_css %}{% endblock %}
+    <style>
+        :root {
+            --primary-bg: #161A1D;
+            --secondary-bg: #2A2F34;
+            --accent-color: #A4161A;
+            --text-color: #D3D3D3;
+            --hover-color: #3C3C3C;
+            --transition-speed: 0.4s;
+        }
+
+        /* Светлая тема */
+        [data-theme="light"] {
+            --primary-bg: #f5f5f5;
+            --secondary-bg: #ffffff;
+            --accent-color: #A4161A;
+            --text-color: #333333;
+            --hover-color: #e0e0e0;
+        }
+
+        body {
+            transition: background-color 0.3s ease, color 0.3s ease;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        * {
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+
+        .menu-container:hover {
+            width: 230px;
+        }
+
+        .menu-header {
+    display: flex;
+    align-items: center;
+    padding: 20px 20px;
+    height: 30px;
+    border-bottom: 3px solid var(--accent-color); /* Толщина и цвет полоски */
+    margin-bottom: 10px; /* Отступ снизу для визуального разделения */
+}
+
+        .logo {
+            font-size: 28px;
+            color: var(--text-color);
+            white-space: nowrap;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        .logo span {
+            color: var(--accent-color);
+        }
+
+        .menu-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 75px;
+    background: var(--secondary-bg);
+    transition: width 0.5s ease;
+    z-index: 1000;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
+    overflow: hidden; /* Добавлено */
+}
+
+.menu-items {
+    padding: 0px 0;
+    height: calc(100vh - 160px);
+    overflow: hidden; /* Изменено с auto на hidden */
+    display: flex;
+    flex-direction: column;
+}
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: all var(--transition-speed) ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item:hover {
+            background: var(--hover-color);
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: var(--accent-color);
+            transform: scaleY(0);
+            transition: transform var(--transition-speed) ease;
+        }
+
+        .menu-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .menu-item i {
+            font-size: 20px;
+            margin-right: 15px;
+            min-width: 25px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .menu-item:hover i {
+            transform: scale(1.2);
+            color: var(--accent-color);
+        }
+
+        .menu-item span {
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 16px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .menu-container:hover .menu-item span {
+            opacity: 1;
+        }
+
+        .user-profile {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .user-profile:hover {
+            background: var(--hover-color);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+            border: 2px solid var(--accent-color);
+        }
+
+        .user-info {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .menu-container:hover .user-info {
+            opacity: 1;
+        }
+
+        .username {
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 14px;
+            color: var(--text-color);
+            margin-bottom: 3px;
+        }
+
+        .user-role {
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 12px;
+            color: var(--accent-color);
+        }
+
+        .menu-item.active {
+            background: var(--hover-color);
+        }
+
+        .menu-item.active::before {
+            transform: scaleY(1);
+        }
+
+        .menu-item.active i {
+            color: var(--accent-color);
+        }
+
+        .menu-items::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .menu-items::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 10px;
+        }
+
+        /* Основной контент */
+        .main-content {
+            margin-left: 75px;
+            transition: margin-left 0.5s ease;
+            min-height: 100vh;
+            background: var(--primary-bg);
+            padding: 20px;
+        }
+
+        .menu-container:hover ~ .main-content {
+            margin-left: 230px;
+        }
+
+        /* Стили для кнопки смены темы внутри меню */
+        .theme-menu-item {
+            border-radius: 0px;
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: all var(--transition-speed) ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+        }
+
+        .theme-menu-item:hover {
+            background: var(--hover-color);
+        }
+
+        .theme-menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: var(--accent-color);
+            transform: scaleY(0);
+            transition: transform var(--transition-speed) ease;
+        }
+
+        .theme-menu-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .theme-menu-item i {
+            font-size: 20px;
+            margin-right: 15px;
+            min-width: 25px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-menu-item:hover i {
+            transform: scale(1.2);
+            color: var(--accent-color);
+        }
+
+        .theme-menu-item span {
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 16px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .menu-container:hover .theme-menu-item span {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Боковое меню -->
+    <div class="menu-container">
+        <div class="menu-header">
+            <div class="logo">KM<span>ㅤSOFT</span></div>
+        </div>
+
+        <div class="menu-items">
+            <button class="theme-menu-item" id="theme-toggle">
+                <i class="fas fa-moon" id="theme-icon"></i>
+                <span>Сменить тему</span>
+            </button>
+            <a href="{{ url_for('dashboard') }}" class="menu-item">
+                <i class="fas fa-home"></i>
+                <span>Главная</span>
+            </a>
+
+            <a href="{{ url_for('create_task') }}" class="menu-item">
+                <i class="fas fa-plus-circle"></i>
+                <span>Создать задачу</span>
+            </a>
+
+            <a href="{{ url_for('tasks') }}" class="menu-item">
+                <i class="fas fa-tasks"></i>
+                <span>Список задач</span>
+            </a>
+
+            <a href="{{ url_for('calendar') }}" class="menu-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Календарь</span>
+            </a>
+
+            <a href="{{ url_for('task_board') }}" class="menu-item">
+                <i class="fas fa-columns"></i>
+                <span>Доска</span>
+            </a>
+
+            <a href="{{ url_for('projects') }}" class="menu-item">
+                <i class="fas fa-project-diagram"></i>
+                <span>Проекты</span>
+            </a>
+
+            <a href="{{ url_for('reports') }}" class="menu-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Отчеты</span>
+            </a>
+
+            <a href="{{ url_for('chat', user_id=current_user.id) }}" class="menu-item">
+                <i class="fas fa-comments"></i>
+                <span>Чат</span>
+            </a>
+
+            <a href="{{ url_for('view_reminders') }}" class="menu-item">
+                <i class="fas fa-bell"></i>
+                <span>Напоминания</span>
+            </a>
+
+            <a href="{{ url_for('editor_page') }}" class="menu-item">
+                <i class="fas fa-file-alt"></i>
+                <span>OnlyOffice</span>
+            </a>
+
+            <a href="{{ url_for('gantt') }}" class="menu-item">
+                <i class="fas fa-project-diagram"></i>
+                <span>Диаграмма Ганта</span>
+            </a>
+
+            <!-- Кнопка смены темы внутри меню -->
+
+        </div>
+
+        <a href="{{ url_for('profile', user_id=current_user.id) }}" class="user-profile-link">
+            <div class="user-profile">
+                {% if current_user.avatar %}
+                    <img src="{{ url_for('uploaded_file', filename=current_user.avatar) }}" class="user-avatar" alt="Аватар">
+                {% else %}
+                    <i class="fas fa-user-circle user-avatar" style="font-size: 40px; color: var(--accent-color);"></i>
+                {% endif %}
+                <div class="user-info">
+                    <div class="username">{{ current_user.username }}</div>
+                    <div class="user-role">{{ current_user.role.role_name }}</div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Основное содержимое страницы -->
+    <div class="main-content">
+        {% block header %}{% endblock %}
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        // Автоподсветка активного пункта меню
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const menuItems = document.querySelectorAll('.menu-item');
+
+            menuItems.forEach(item => {
+                if (item.getAttribute('href') === currentPath) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Проверяем сохраненную тему в localStorage
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            // Инициализируем иконку
+            updateThemeIcon(savedTheme);
+
+            // Обработчик клика по переключателю
+            document.getElementById('theme-toggle').addEventListener('click', function() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+                // Применяем новую тему
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+
+                // Обновляем иконку
+                updateThemeIcon(newTheme);
+            });
+
+            function updateThemeIcon(theme) {
+                const icon = document.getElementById('theme-icon');
+                if (theme === 'dark') {
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
+                } else {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                }
+            }
+
+            // Анимация иконок при наведении
+            const icons = document.querySelectorAll('.menu-item i, .theme-menu-item i');
+            icons.forEach(icon => {
+                icon.addEventListener('mouseenter', function() {
+                    this.style.transform = 'rotate(5deg) scale(1.2)';
+                });
+                icon.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                });
+            });
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

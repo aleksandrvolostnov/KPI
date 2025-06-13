@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчеты</title>
+
+    <!-- Подключаем Choices.js -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+    <!-- Подключаем Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <!-- Подключаем Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            background-color: var(--primary-bg);
+            color: #D3D3D3;
+            background-size: cover;
+            background-position: center;
+            font-family: 'Century Gothic', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 120vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background-color: var(--secondary-bg);
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 1000px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        h1, h2 {
+            color: var(--text-color);
+            margin-bottom: 40px;
+            font-family: 'Century Gothic', sans-serif;
+            font-weight: normal;
+        }
+
+        h3 {
+           color: var(--text-color);
+            font-family: 'Century Gothic', sans-serif;
+            font-weight: normal;
+            font-size: 1.3em;
+        }
+
+        .button {
+            background-color: var(--text-color);
+            color: var(--primary-bg);
+            padding: 12px;
+            border: none;
+            border-radius: 20px;
+            font-size: 1em;
+            font-family: 'Century Gothic', sans-serif;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            width: 200px;
+            margin: 15px auto;
+            display: inline-block;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .period-form {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .period-form label {
+            font-size: 1.2em;
+            color: var(--text-color);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .period-form input[type="text"],
+        .choices__inner {
+            width: 100%;
+            padding: 12px;
+            color: var(--text-color);
+            border-radius: 10px;
+            border: 2px solid var(--text-color);
+            margin-bottom: 15px;
+            font-size: 1em;
+            font-family: 'Century Gothic', sans-serif;
+            box-sizing: border-box;
+            background-color: var(--secondary-bg);
+        }
+        .choices__list .choices__item:hover {
+        background-color: var(--secondary-bg) !important;
+        color: var(--accent-color) !important;
+        border: none !important;
+    }
+            .choices__list .choices__item {
+        background-color: var(--secondary-bg) !important;
+        color: var(--text-color) !important;
+        border: none !important;
+    }
+        .flatpickr-calendar {
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .flatpickr-month {
+            background-color: #F9D8B1;
+            color: black;
+            border-radius: 8px;
+        }
+
+        .flatpickr-day:hover {
+            background-color: var(--hover-color);
+            color: var(--text-color);
+        }
+
+        .flatpickr-day.selected {
+            background-color: var(--hover-color);
+            color: var(--text-color);
+        }
+
+        .info-container {
+            margin-bottom: 30px;
+        }
+
+        .kpi-charts {
+            display: flex;
+            justify-content: space-between;
+            margin: 0px 160px;
+            margin-top: -20px; /* Подняли блок с диаграммами */
+        }
+
+        .chart-container {
+            width: 130px;
+            height: 130px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chart-container canvas {
+            margin-bottom: 10px;
+        }
+
+        .chart-container .percentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.6em; /* Увеличили размер шрифта для процентов */
+            font-weight: normal;
+            color: var(--text-color);
+        }
+
+        .reports-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 20px;
+            color: var(--text-color);
+
+        }
+
+        .report-section {
+            background-color: var(--primary-bg);
+            padding: 10px;
+            color: var(--text-color);
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            width: 48%;
+            text-align: center;
+        }
+
+        .download-buttons {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        footer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+        }
+
+        .menu-button {
+            background-color: #2A2F34;
+            color: #d3d3d3;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 1em;
+            font-family: 'Century Gothic', sans-serif;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            width: auto;
+            display: inline-block;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+        }
+
+        .menu-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+            background-color:#161A1D;
+            color: #d3d3d3;
+        }
+
+        button {
+            width: 200px;
+            margin: 0 10px;
+        }
+
+        .download-chart-btn {
+            margin-bottom: 10px;
+        }
+        .download-button {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+            background-color: var(--text-color);
+            color: var(--primary-bg);
+            padding: 12px;
+            border: none;
+            border-radius: 20px;
+            font-size: 1em;
+            font-family: 'Century Gothic', sans-serif;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            margin: 15px auto;
+            display: inline-block;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .download-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+        .chart-container .chart-label {
+            position: absolute;
+            bottom: -20px; /* Подпись будет находиться чуть ниже диаграммы */
+            width: 120%;
+            font-size: 1.2em;
+            font-weight: normal;
+            color: var(--text-color);
+        }
+        .chart-container .chart-label-own {
+            position: absolute;
+            bottom: -20px; /* Подпись будет находиться чуть ниже диаграммы */
+            width: 120%;
+            font-size: 1.2em;
+            font-weight: normal;
+            color: var(--text-color);
+        }
+        .chart-container .userKpipercentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.6em; /* Размер шрифта */
+            font-weight: normal; /* Жирность */
+            color: var(--text-color); /* Цвет текста */
+        }
+        .chart-container .companyKpipercentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.6em; /* Размер шрифта */
+            font-weight: normal; /* Жирность */
+            color: var(--text-color); /* Цвет текста */
+        }
+
+
+
+
+    .flash {
+        color: red;
+        margin-bottom: 15px;
+        text-align: center;
+        font-family: 'Century Gothic', sans-serif;
+    }
+
+
+
+
+    /* Контейнер для информации о KPI */
+    .info-container {
+        margin-bottom: 30px;
+    }
+
+    /* Контейнеры с отчетами рядом */
+    .reports-container {
+        display: flex;
+        justify-content: space-between;
+
+        font-weight: normal;
+        gap: 20px; /* Расстояние между контейнерами */
+        margin-top: 0px;
+    }
+
+    /* Стиль для каждого контейнера с отчетами */
+    .report-section {
+        background-color:var(--primary-bg);
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        width: 48%; /* Контейнеры занимают 48% ширины */
+        text-align: center;
+        font-weight: normal;
+    }
+
+    .report-section h3 {
+        margin-bottom: 15px;
+        font-size: 1.5em;
+        color: var(--text-color);
+        font-weight: normal;
+    }
+
+    .report-section p {
+        font-size: 1.2em;
+        color: var(--text-color);
+        font-weight: normal;
+    }
+
+    /* Кнопки скачивания по центру контейнера */
+    .download-buttons {
+        display: flex;
+        justify-content: center; /* Выравниваем по центру */
+        gap: 10px; /* Добавляем промежуток между кнопками */
+    }
+
+    /* Кнопка меню в правом верхнем углу */
+
+    .info-container p strong {
+        font-weight: normal; /* Жирное начертание */
+        font-size: 1.2em;
+    }
+</style>
+{% extends 'base.html' %}
+    {% block title %}Дашборд{% endblock %}
+{% block content %}
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Отчеты</h1>
+        </header>
+
+        <section class="info-container">
+            <h2>Коэффициент Продуктивности (KPI)</h2>
+            <div class="kpi-charts">
+                <div class="chart-container">
+                    <canvas id="userKpiChart"></canvas>
+                    <div class="userKpipercentage" id="userKpiPercentage"></div>
+                    <div class="chart-label-own">Личный KPI</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="companyKpiChart"></canvas>
+                    <div class="companyKpipercentage" id="companyKpiPercentage"></div>
+                    <div class="chart-label">KPI предприятия</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="reports-container">
+            <div class="report-section">
+                <h3>Отчет сотрудника</h3>
+                <form method="POST" action="{{ url_for('download_report') }}" class="period-form">
+                    <label for="start_date">Дата начала:</label>
+                    <input type="text" name="start_date" id="start_date" placeholder="Выберите дату" required>
+                    <label for="end_date">Дата окончания:</label>
+                    <input type="text" name="end_date" id="end_date" placeholder="Выберите дату" required>
+                    {% if current_user.role.role_name == 'Admin' %}
+                    <label for="user_id">Выберите сотрудника:</label>
+                    <select name="user_id" id="user_id" required>
+                        {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                    <div class="download-buttons">
+                        <button type="submit" class="download-button">Скачать отчет</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="report-section">
+                <h3>Сравнительная диаграмма эффективности</h3>
+                <form method="POST" action="{{ url_for('download_all_kpis') }}" class="period-form">
+                    <label for="start_date_chart">Дата начала:</label>
+                    <input type="text" name="start_date" id="start_date_chart" placeholder="Выберите дату" required>
+                    <label for="end_date_chart">Дата окончания:</label>
+                    <input type="text" name="end_date" id="end_date_chart" placeholder="Выберите дату" required>
+                    <div class="download-buttons">
+                        <button type="submit" class="button download-chart-btn">Скачать диаграмму</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+{% endblock %}
+    {% block extra_js %}
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const createPieChart = (ctx, value, elementId, colors) => {
+            const chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [value, 100 - value],
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '70%',
+                    plugins: {
+                        tooltip: { enabled: false },
+                        legend: { display: false }
+                    }
+                }
+            });
+            document.getElementById(elementId).innerText = `${value}%`;
+        };
+
+        flatpickr("#start_date", { dateFormat: "Y-m-d" });
+        flatpickr("#end_date", { dateFormat: "Y-m-d" });
+        flatpickr("#start_date_chart", { dateFormat: "Y-m-d" });
+        flatpickr("#end_date_chart", { dateFormat: "Y-m-d" });
+
+        const userKpi = {{ user_kpi | round(1) }};
+        const userKpiCtx = document.getElementById("userKpiChart");
+        const userKpiColors = ['#800020', '#3C3C3C']; // Customize these colors
+        createPieChart(userKpiCtx, userKpi, 'userKpiPercentage', userKpiColors);
+
+        const companyKpi = {{ company_kpi | round(1) }};
+        const companyKpiCtx = document.getElementById("companyKpiChart");
+        const companyKpiColors = ['#6E2C3B', '#E0E0E0']; // Customize these colors
+        createPieChart(companyKpiCtx, companyKpi, 'companyKpiPercentage', companyKpiColors);
+
+        new Choices('#user_id', { searchEnabled: true, itemSelectText: '', placeholder: true, placeholderValue: 'Выберите сотрудника' });
+
+
+    });
+</script>
+{% endblock %}
+</body>
+</html>

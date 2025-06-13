@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактирование напоминания</title>
+
+    <!-- Подключаем Choices.js -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+    <!-- Подключаем flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <style>
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            background-size: cover;
+            background-position: center;
+            font-family: 'Century Gothic', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 32px;
+            text-align: center;
+            font-weight: normal;
+        }
+
+        .form-container {
+            background-color: var(--secondary-bg);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        input[type="text"],
+        .choices__inner,
+        textarea {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            color: #D1D1D1;
+            border: 2px solid var(--text-color);
+            border-radius: 10px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 16px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-sizing: border-box;
+            background-color: var(--secondary-bg);
+
+        }
+
+        input[type="text"]:focus,
+        .choices__inner:focus,
+        textarea:focus {
+            border-color: var(--text-color);
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.2);
+            outline: none;
+            background-color: var(--secondary-bg);
+
+        }
+.choices__list .choices__item:hover {
+        background-color: var(--secondary-bg) !important;
+        color: var(--accent-color) !important;
+        border: none !important;
+    }
+            .choices__list .choices__item {
+        background-color: var(--secondary-bg) !important;
+        color: var(--text-color) !important;
+        border: none !important;
+    }
+        .button {
+            background-color: var(--text-color);
+            color: var(--primary-bg);
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            width: 100%; /* Сделаем кнопки на всю ширину контейнера */
+            padding: 12px;
+            text-align: center;
+            border-radius: 10px;
+            display: block;
+            margin: 10px 0; /* Отступ между кнопками */
+            font-family: 'Century Gothic', sans-serif;
+            text-decoration: none; /* Убираем подчеркивание */
+        }
+
+        .button:hover {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+        }
+
+        .flash {
+            color: red;
+            margin-bottom: 15px;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        .choices__list--dropdown .choices__item--selectable:hover {
+            background-color: var(--text-color);
+            color: var(--hover-color);
+        }
+
+        /* Стили для кастомного календаря flatpickr */
+        #datetime-local {
+            padding: 15px;
+            border: 2px solid var(--text-color);
+            border-radius: 10px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 16px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-sizing: border-box;
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            width: 100%;
+        }
+
+        .flatpickr-calendar {
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .flatpickr-month {
+            background-color: var(--text-color);
+            color: var(--primary-bg);
+            border-radius: 8px;
+        }
+
+        .flatpickr-day:hover {
+            background-color: var(--hover-color);
+            color: white;
+        }
+
+        .flatpickr-day.selected {
+            background-color: var(--hover-color);
+            color: var(--text-color);
+        }
+    </style>
+    {% extends 'base.html' %}
+    {% block title %}Дашборд{% endblock %}
+{% block content %}
+</head>
+<body>
+    <div class="container">
+        <h1>Редактирование напоминания</h1>
+
+        <div class="form-container">
+            <form method="POST" action="{{ url_for('edit_reminder', reminder_id=reminder.id) }}">
+                <input type="text" name="title" placeholder="Название напоминания" value="{{ reminder.title }}" required>
+                <textarea name="description" placeholder="Описание напоминания" rows="4">{{ reminder.description }}</textarea>
+
+                <!-- Обновляем инпут для даты и времени, чтобы использовать flatpickr -->
+                <input type="text" id="datetime-local" name="reminder_date" value="{{ reminder.reminder_date.strftime('%Y-%m-%dT%H:%M:%S') }}" required>
+
+                <select id="priority" name="priority" required>
+                    <option value="">Выберите приоритет</option>
+                    <option value="Низкий" {% if reminder.priority == 'Низкий' %}selected{% endif %}>Низкий</option>
+                    <option value="Средний" {% if reminder.priority == 'Средний' %}selected{% endif %}>Средний</option>
+                    <option value="Высокий" {% if reminder.priority == 'Высокий' %}selected{% endif %}>Высокий</option>
+                </select>
+
+                <select id="repeat" name="repeat" required>
+                    <option value="Нет" {% if reminder.repeat == 'Нет' %}selected{% endif %}>Не повторяется</option>
+                    <option value="Ежедневно" {% if reminder.repeat == 'Ежедневно' %}selected{% endif %}>Ежедневно</option>
+                    <option value="Еженедельно" {% if reminder.repeat == 'Еженедельно' %}selected{% endif %}>Еженедельно</option>
+                    <option value="Ежемесячно" {% if reminder.repeat == 'Ежемесячно' %}selected{% endif %}>Ежемесячно</option>
+                </select>
+
+                <button type="submit" class="button">Сохранить изменения</button>
+            </form>
+
+            <form method="GET" action="{{ url_for('view_reminders') }}">
+                <button type="submit" class="button">Назад к списку напоминаний</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+    {% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Инициализация Choices.js для select
+            const elements = document.querySelectorAll('select');
+            elements.forEach(function (element) {
+                new Choices(element, {
+                    searchEnabled: false,
+                    itemSelectText: '',
+                });
+            });
+
+            // Инициализация flatpickr для поля с датой и временем
+            flatpickr("#datetime-local", {
+                enableTime: true,  // Включить выбор времени
+                dateFormat: "Y-m-d\\TH:i", // Формат отображаемой даты, с T между датой и временем
+                minDate: "today",  // Запретить выбор прошедших дат
+                time_24hr: true,   // 24-часовой формат времени
+                theme: "dark",     // Темная тема
+            });
+        });
+    </script>
+{% endblock %}
+</body>
+</html>

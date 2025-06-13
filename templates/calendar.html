@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Календарь задач</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+    <style>
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            background-size: cover;
+            background-position: center;
+            font-family: 'Century Gothic', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            margin-top: -1700px;
+            font-size: 36px;
+            text-align: center;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+            font-weight: normal;
+        }
+
+        .navigation {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .navigation .button {
+            background-color: var(--text-color);
+            color: var(--primary-bg);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: normal;
+            transition: all 0.3s ease;
+        }
+
+        .navigation .button:hover {
+            background-color: var(--accent-color);
+            color: #d3d3d3;
+            transform: scale(1.05);
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 15px;
+            background-color: var(--secondary-bg);
+            padding: 20px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 1000px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+
+        }
+
+        .day {
+            background: var(--primary-bg);
+            border-radius: 15px;
+            padding: 10px;
+            text-align: center;
+            position: relative;
+            height: 120px;
+            cursor: pointer;
+        }
+
+        .day:hover {
+            transform: translateY(-5px);
+            box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-button {
+            background-color: #F3A57A;
+            color: whitesmoke;
+            padding: 5px;
+            border-radius: 10px;
+            font-weight: normal;
+            margin: 5px 0;
+            position: relative;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .task-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .task-popup {
+            visibility: hidden;
+            position: absolute;
+            bottom: 220%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 220px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+            font-weight: normal;
+        }
+
+        .task-button:hover .task-popup {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .task-title-link {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: normal;
+        }
+
+        .task-title-link:hover {
+            text-decoration: underline;
+        }
+
+        .priority-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+
+        .low-priority {
+            background-color: #6ABFB1;
+        }
+
+        .medium-priority {
+            background-color: #F3A57A;
+        }
+
+        .high-priority {
+            background-color: #F05A4F;
+        }
+
+        .week-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 15px;
+            text-align: center;
+            font-weight: normal;
+            background: var(--secondary-bg);
+            padding: 10px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 10px;
+        }
+
+        .week-days div {
+            padding: 10px;
+            font-size: 18px;
+            color: var(--text-color);
+        }
+
+        .dashboard-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #2A2F34;
+            color: #d3d3d3;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: normal;
+            font-family: 'Century Gothic', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-button:hover {
+            background-color: #161A1D;
+            color: #d3d3d3;
+            transform: scale(1.05);
+        }
+
+        .task-details strong {
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 1.1em;
+            font-weight: normal;
+        }
+
+        .analytics-difficulty {
+            position: absolute;
+            top: -35%;
+            right: 15px;
+            transform: translateY(-50%);
+            width: 400px;
+            max-height: 200px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 1em;
+            font-weight: normal;
+        }
+
+        .analytics-priority {
+            position: absolute;
+            top: -65%;
+            right: 15px;
+            transform: translateY(-50%);
+            width: 400px;
+            max-height: 200px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 1em;
+            font-weight: normal;
+        }
+
+        .chartjs-legend {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .chartjs-legend li {
+            display: block;
+            padding: 5px 0;
+        }
+        h2 {
+            color: #6ABFB1;
+        }
+    </style>
+</head>
+<body>
+
+    {% include 'base.html' %} <!-- Включаем базовую навигацию -->
+
+    <div class="container">
+        <h1>Календарь задач</h1>
+        <div class="navigation">
+            <a class="button" href="{{ url_for('calendar', month=previous_month, year=previous_year) }}">&#8249; Предыдущий месяц</a>
+            <span style="font-size: 20px; font-weight: normal;">{{ current_month_name }} {{ current_year }}</span>
+            <a class="button" href="{{ url_for('calendar', month=next_month, year=next_year) }}">Следующий месяц &#8250;</a>
+        </div>
+        <div class="analytics-difficulty">
+            <h2>Сложность задач</h2>
+            <canvas id="difficultyChart"></canvas>
+        </div>
+        <div class="analytics-priority">
+            <h2>Приоритеты задач</h2>
+            <canvas id="priorityChart"></canvas>
+        </div>
+
+        <div class="week-days">
+            <div>Пн</div>
+            <div>Вт</div>
+            <div>Ср</div>
+            <div>Чт</div>
+            <div>Пт</div>
+            <div>Сб</div>
+            <div>Вс</div>
+        </div>
+        <div class="calendar">
+            {% for week in calendar_days %}
+                {% for day in week %}
+                    <div class="day">
+                        {% if day.date %}
+                            <div class="day-header">{{ day.date.strftime('%d') }}</div>
+                            {% for task in day.tasks %}
+                                <div class="task-button {% if task.priority == 'Низкий' %}low-priority{% elif task.priority == 'Средний' %}medium-priority{% else %}high-priority{% endif %}">
+                                    <a href="{{ url_for('edit_task', task_id=task.id) }}" class="task-title-link">
+                                        {{ task.title[:9] }}
+                                    </a>
+                                    <div class="task-popup">
+                                        <div class="priority-indicator {% if task.priority == 'Низкий' %}low-priority{% elif task.priority == 'Средний' %}medium-priority{% else %}high-priority{% endif %}"></div>
+                                        <div class="task-details">
+                                            <p><strong>Задача:</strong> {{ task.title }}</p>
+                                            <p><strong>Описание:</strong> {{ task.description }}</p>
+                                            <p><strong>Приоритет:</strong> {{ task.priority }}</p>
+                                            <p><strong>Срок:</strong> {{ task.due_date.strftime('%d-%m-%Y') }}</p>
+                                            <p><strong>Ответственный:</strong> {{ task.assigned_to.username }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function addShadowToChart(ctx) {
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetX = 5;
+            ctx.shadowOffsetY = 5;
+        }
+
+        new Chart(document.getElementById('difficultyChart'), {
+            type: 'pie',
+            data: {
+                labels: ['Краткосрочные', 'Среднесрочные', 'Долгосрочные'],
+                datasets: [{
+                    data: [{{ easy_count }}, {{ medium_count }}, {{ hard_count }}],
+                    backgroundColor: ['#6ABFB1', '#F3A57A', '#F05A4F'],
+                    hoverOffset: 15,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        align: 'start',
+                        labels: {
+                            boxWidth: 20,
+                            padding: 10,
+                            usePointStyle: true,
+                            font: {
+                                size: 14,
+                                family: 'Century Gothic'
+                            },
+                            color: '#6ABFB1',
+                            boxHeight: 200
+                        }
+                    }
+                }
+            },
+            plugins: [{
+                beforeDraw: (chart) => addShadowToChart(chart.ctx)
+            }]
+        });
+
+        new Chart(document.getElementById('priorityChart'), {
+            type: 'pie',
+            data: {
+                labels: ['Не срочные', 'Важные', 'Критические'],
+                datasets: [{
+                    data: [{{ low_priority_count }}, {{ medium_priority_count }}, {{ high_priority_count }}],
+                    backgroundColor: ['#6ABFB1', '#F3A57A', '#F05A4F'],
+                    hoverOffset: 15,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        align: 'start',
+                        labels: {
+                            boxWidth: 20,
+                            padding: 10,
+                            usePointStyle: true,
+                            font: {
+                                size: 14,
+                                family: 'Century Gothic'
+                            },
+                            color: '#6ABFB1',
+                            boxHeight: 200
+                        }
+                    }
+                }
+            },
+            plugins: [{
+                beforeDraw: (chart) => addShadowToChart(chart.ctx)
+            }]
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проект: {{ project.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <style>
+    * {
+        font-family: 'Century Gothic', sans-serif;
+        font-weight: normal;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--primary-bg);
+        color: var(--text-color);
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+
+    .header {
+    display: flex;
+    justify-content: center; /* Центрируем контент по горизонтали */
+    align-items: center;
+    padding: 20px 40px;
+    position: relative;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 2.5em;
+    text-align: center; /* Выравниваем текст внутри h1 по центру */
+}
+
+
+    .back-to-projects-button {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background-color: var(--secondary-bg);
+        color: var(--text-color);
+        padding: 12px 20px;
+        border-radius: 15px;
+        font-size: 1em;
+        text-decoration: none;
+        transition: 0.3s ease;
+    }
+
+    .back-to-projects-button:hover {
+        background-color: var(--primary-bg);
+    }
+
+    .project-detail-container {
+        max-width: 800px;
+        margin: 10px auto;
+        padding: 20px;
+        background-color: var(--secondary-bg);
+        border-radius: 15px;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        text-align: center;
+    }
+
+    .project-detail {
+        margin-bottom: 30px;
+    }
+
+    .project-detail h3 {
+        font-size: 1.8em;
+        margin-bottom: 15px;
+        border-bottom: 2px solid var(--text-color);
+        padding-bottom: 10px;
+        color: var(--text-color);
+    }
+    h4 {
+        font-size: 1.2em;
+        margin-bottom: 0px;
+        padding-bottom: 0px;
+        color: var(--text-color);
+        font-family: 'Century Gothic', sans-serif;
+    }
+
+    .project-detail p {
+        font-size: 1.2em;
+        color: var(--text-color);
+    }
+
+    .member-list {
+        margin-top: 30px;
+    }
+
+/* Выравнивание кнопок */
+.action-buttons {
+    text-align: center;
+}
+
+/* Список участников */
+.member-list ul {
+    margin-bottom: 20px;
+    padding: 0;
+    list-style: none;
+    text-align: center;
+    border: none;
+    border-radius: 5px;
+}
+
+.member-list li {
+    margin: 5px 0;
+    font-size: 1.3em;
+    color: var(--text-color);
+    border-radius: 5px;
+}
+
+
+    .choices {
+    width: 100%; /* Устанавливаем одинаковую ширину для контейнера */
+    max-width: 450px; /* Задаем предел ширины, если нужно */
+    margin: 0 auto; /* Центрируем элемент */
+    border-radius: 20px / 25px; /* Закругление только по бокам */
+}
+
+.choices__inner {
+    background-color: var(--secondary-bg-bg);
+    border-radius: 20px / 25px; /* Закругление только по бокам */
+    color: var(--text-color);
+    padding-left: 12px; /* Убедитесь, что слева есть отступ */
+    padding: 5px;
+    border: none;
+    width: 100%; /* Устанавливаем ширину */
+    overflow: hidden; /* Скрываем все, что выходит за пределы */
+    box-sizing: border-box; /* Включаем паддинги и бордеры в расчеты ширины */
+}
+
+.choices__input {
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    border: none;
+    font-size: 16px;
+    border-radius: 20px / 25px; /* Закругление только по бокам */
+    padding: 5px;
+    outline: none; /* Убираем подсветку */
+    width:70%;
+}
+
+
+.choices__list--dropdown {
+    background-color: var(--text-color);
+    color: var(--primary-bg);
+    border-radius: 20px / 25px; /* Закругление только по бокам */
+    width: 90%; /* Ширина совпадает с select */
+    padding-left: 12px; /* То же самое для выпадающего списка */
+    overflow: hidden; /* Скрываем все, что выходит за пределы */
+    box-sizing: border-box; /* Включаем паддинги и бордеры в расчеты ширины */
+    margin-top: 0; /* Убираем лишние отступы сверху */
+    verflow-y: auto; /* Включаем вертикальную прокрутку */
+    scrollbar-width: thin; /* Firefox: делаем скроллбар минимально заметным */
+    scrollbar-color: transparent transparent; /* Firefox: скрываем скроллбар */
+}
+.choices__list--dropdown::-webkit-scrollbar {
+    width: 0; /* Убираем ширину скроллбара (Chrome, Safari, Opera) */
+    height: 0; /* Убираем высоту скроллбара для горизонтальной прокрутки */
+}
+
+.choices__list--dropdown::-webkit-scrollbar-thumb {
+    background: transparent; /* Делаем скролл-прокрутку невидимой */
+}
+
+.choices__list--dropdown::-webkit-scrollbar-track {
+    background: transparent; /* Убираем фон трека */
+}
+.choices__item {
+    background-color: var(--text-color);
+    color: var(--primary-bg);
+    padding: 10px;
+    border-radius: 25px / 25px; /* Закругление только по бокам */
+    margin: 5px 0;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.choices__item--highlighted {
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    border-radius: 25px / 25px; /* Закругление только по бокам */
+    padding-left: 12px; /* Добавляем отступ слева */
+}
+
+.custom-choices__inner {
+    border-radius: 90px / 45px !important; /* Полукруглые боковые края */
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.0); /* Прозрачный фон */
+    color: var(--text-color); /* Цвет текста */
+    padding: 5px 5px; /* Добавляем отступ */
+    box-sizing: border-box; /* Корректный расчёт ширины */
+    display: flex; /* Убедимся, что элемент корректно распределяет контент */
+    align-items: center; /* Центрируем контент по вертикали */
+}
+
+.custom-choices__input {
+    border: none;
+    font-size: 16px;
+    border-radius: 90px / 45px !important; /* Полукруглый стиль */
+    padding: 5px 5px;
+    background-color: transparent; /* Прозрачный фон */
+    color: var(--text-color);
+    outline: none; /* Убираем стандартную подсветку */
+    width: 110%; /* Растягиваем поле по ширине */
+}
+
+
+
+
+    .choices__input:focus {
+        background-color: rgba(0, 0, 0, 0.0);
+        border: 0px solid var(--primary-bg);
+        width: 70%;
+
+    }
+
+    .member-list button[type="submit"] {
+        background-color: rgba(0, 0, 0, 0.0);
+        color: var(--text-color);
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 1em;
+        text-decoration: none;
+        font-family: 'Century Gothic', sans-serif;
+        font-weight: normal;
+        border: none;
+        cursor: pointer;
+        transition: 0.3s ease;
+
+    }
+
+    .member-list button[type="submit"]:hover {
+        background-color: rgba(0, 0, 0, 0.0);
+        color: var(--text-color);
+        transform: translateY(-5px);
+    }
+
+    .task-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+        gap: 10px;
+    }
+
+    .task-buttons .button {
+        background-color: var(--text-color);
+        color: var(--primary-bg);
+        padding: 12px 20px;
+        border-radius: 15px;
+        font-size: 1em;
+        text-decoration: none;
+        transition: 0.3s ease;
+        width: 280px;
+        text-align: center;
+
+    }
+    .task-buttons .button:hover {
+        transform: translateY(-5px);
+
+    }
+
+
+
+    .project-detail, .member-list h4, .member-list li {
+        font-weight: normal;
+    }
+
+
+    .choices__list .choices__item:hover {
+        background-color: var(--primary-bg) !important;
+        color: var(--text-color) !important;
+        border: none !important;
+    }
+
+    /* Стили для кнопок "Добавить" и "Удалить" */
+    .action-buttons {
+        margin-top: 20px;
+        text-align: center;
+        font-size: 1.3em;
+    }
+    .action-buttons:hover {
+        transform: translateY(-5px);
+    }
+
+    </style>
+    {% extends 'base.html' %}
+    {% block title %}Дашборд{% endblock %}
+{% block content %}
+</head>
+<body>
+    <header class="header">
+        <h1>{{ project.name }}</h1>
+    </header>
+
+    <div class="project-detail-container">
+        <div class="project-detail">
+            <h3>{{ project.name }}</h3>
+            <p>Описание проекта: {{ project.description if project.description else 'Описание отсутствует' }}</p>
+            <p><strong>Дата создания:</strong> {{ project.created_at.strftime('%d-%m-%Y') }}</p>
+        </div>
+
+        <div class="member-list">
+            {% if project.owner_id == current_user.id %}
+            <form method="POST" action="{{ url_for('add_project_member', project_id=project.id) }}" style="text-align: center;">
+                <select name="user_id" id="user-select" class="choices" required>
+                    <option value="">Выберите пользователя</option>
+                    {% for user in all_users %}
+                    <option value="{{ user.id }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+                <div class="action-buttons">
+                    <button type="submit"><i class="fas fa-plus add-icon"></i> Добавить</button>
+                </div>
+            </form>
+            {% endif %}
+
+    <h4>Участники проекта: </h4>
+    <ul>
+        {% for member in project.members %}
+        <li>
+            {{ member.username }}
+            {% if member.id != current_user.id %}
+            <form method="POST" action="{{ url_for('remove_project_member', project_id=project.id) }}" style="display: inline-block;">
+                <input type="hidden" name="user_id" value="{{ member.id }}">
+                <button type="submit" class="button">Удалить</button>
+            </form>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+
+        <div class="task-buttons">
+            <a href="{{ url_for('project_tasks', project_id=project.id) }}" class="button"><i class="fas fa-tasks"></i> Перейти к задачам</a>
+            <a href="{{ url_for('edit_project', project_id=project.id) }}" class="button"><i class="fas fa-edit"></i> Редактировать</a>
+            <form method="POST" action="{{ url_for('delete_project', project_id=project.id) }}" style="display: inline-block;">
+                <button type="submit" class="button"><i class="fas fa-trash"></i> Удалить</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+    {% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const elements = document.querySelectorAll('select');
+            elements.forEach(function (element) {
+                new Choices(element, {
+                    searchEnabled: false,
+                    itemSelectText: '',
+                    shouldSort: false,
+                    classNames: {
+                    containerInner: 'custom-choices__inner',
+                    },
+                });
+
+            });
+        });
+    </script>
+{% endblock %}
+</body>
+</html>

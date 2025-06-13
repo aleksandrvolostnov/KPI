@@ -1,0 +1,16 @@
+{
+  "name": "kpi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "choices.js": "^11.0.2",
+    "dhtmlx-gantt": "^9.0.2"
+  }
+}

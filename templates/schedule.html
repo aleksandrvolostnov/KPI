@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Calendar</title>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #161A1D;
+            --text-color: #D3D3D3;
+            --element-color: #2A2F34;
+            --danger-color: #A4161A;
+            --time-column-width: 80px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+        }
+
+        .container {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .week-navigation {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .current-week {
+            font-weight: bold;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .calendar-wrapper {
+            display: grid;
+            grid-template-columns: var(--time-column-width) 1fr;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .time-column {
+            position: relative;
+            height: calc(60px * 22);
+            margin-top: 40px;
+        }
+
+        .time-slot {
+            height: 60px;
+            border-bottom: 1px solid #3A3F44;
+            position: relative;
+            font-size: 0.8em;
+            padding-right: 0.5rem;
+            text-align: right;
+            color: #6B7280;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            position: relative;
+            height: calc(60px * 22);
+            min-width: 800px;
+        }
+
+        .day-column {
+            position: relative;
+            border-right: 1px solid #3A3F44;
+        }
+
+        .day-header {
+            position: absolute;
+            top: -40px;
+            width: 100%;
+            text-align: center;
+            padding: 0.5rem;
+            background-color: var(--element-color);
+            border-radius: 8px;
+        }
+
+        .day-date {
+            font-size: 0.9em;
+            color: #888;
+        }
+
+        .event-card {
+            position: absolute;
+            background-color: var(--element-color);
+            border-radius: 6px;
+            padding: 0.5rem;
+            cursor: move;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            border-left: 4px solid;
+            width: calc(100% - 8px);
+            margin-left: 4px;
+        }
+
+        .event-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            z-index: 100;
+        }
+
+        .event-actions {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 0.3rem;
+            display: none;
+            background: rgba(0,0,0,0.5);
+            border-radius: 0 6px 0 6px;
+        }
+
+        .event-card:hover .event-actions {
+            display: flex;
+            gap: 0.3rem;
+        }
+
+        .edit-btn, .delete-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 0.2rem;
+        }
+
+        .delete-btn { color: var(--danger-color); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--element-color);
+            padding: 2rem;
+            border-radius: 8px;
+            z-index: 1000;
+            width: 400px;
+        }
+
+        .modal.active {
+            display: block;
+        }
+
+        .modal h2 {
+            margin-bottom: 1rem;
+        }
+
+        .modal input, .modal textarea, .modal select {
+            width: 100%;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            background-color: var(--bg-color);
+            border: 1px solid #3A3F44;
+            color: var(--text-color);
+            border-radius: 4px;
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .color-option.selected {
+            border-color: var(--text-color);
+        }
+
+        .add-btn {
+            background-color: var(--element-color);
+            color: var(--text-color);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .add-btn:hover {
+            background-color: #3A3F44;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Расписание</h1>
+            <div class="week-navigation">
+                <button class="add-btn" onclick="changeWeek(-1)">← Пред</button>
+                <span class="current-week" id="currentWeek"></span>
+                <button class="add-btn" onclick="changeWeek(1)">След →</button>
+            </div>
+            <button class="add-btn" onclick="openModal()">+ Добавить событие</button>
+        </div>
+
+        <div class="calendar-wrapper">
+            <div class="time-column" id="timeColumn"></div>
+            <div class="days-grid" id="daysGrid"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно -->
+    <div id="eventModal" class="modal">
+        <h2 id="modalTitle">Новое событие</h2>
+        <input type="text" id="eventTitle" placeholder="Название события" required>
+        <textarea id="eventDesc" placeholder="Описание"></textarea>
+
+        <div class="time-inputs">
+            <input type="datetime-local" id="startTime" step="1800" required>
+            <input type="datetime-local" id="endTime" step="1800" required>
+        </div>
+
+        <div class="color-picker" id="colorPicker">
+            <div class="color-option" style="background-color: #A4161A"></div>
+            <div class="color-option" style="background-color: #2A9D8F"></div>
+            <div class="color-option" style="background-color: #E9C46A"></div>
+            <div class="color-option" style="background-color: #264653"></div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="add-btn" onclick="saveEvent()">Сохранить</button>
+            <button class="add-btn" style="background-color: var(--danger-color)" onclick="closeModal()">Отмена</button>
+        </div>
+    </div>
+
+    <script>
+        let currentWeekOffset = 0;
+        let currentEventId = null;
+        let selectedColor = '#A4161A';
+        const workHours = { start: 8, end: 19 };
+        const minuteStep = 30;
+
+        // Инициализация календаря
+        function initCalendar() {
+            updateWeekDisplay();
+            initTimeGrid();
+            renderDaysHeaders();
+            fetchEvents();
+        }
+
+        // Генерация временной сетки
+        function initTimeGrid() {
+            const timeColumn = document.getElementById('timeColumn');
+            timeColumn.innerHTML = '';
+
+            for (let hour = workHours.start; hour <= workHours.end; hour++) {
+                for (let minute = 0; minute < 60; minute += minuteStep) {
+                    const timeSlot = document.createElement('div');
+                    timeSlot.className = 'time-slot';
+                    timeSlot.textContent = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+                    timeColumn.appendChild(timeSlot);
+                }
+            }
+        }
+
+        // Рендер заголовков дней
+        function renderDaysHeaders() {
+            const daysGrid = document.getElementById('daysGrid');
+            daysGrid.innerHTML = '';
+
+            const startOfWeek = getStartOfWeek();
+
+            for(let i = 0; i < 7; i++) {
+                const dayDate = new Date(startOfWeek);
+                dayDate.setDate(dayDate.getDate() + i);
+
+                const dayColumn = document.createElement('div');
+                dayColumn.className = 'day-column';
+                dayColumn.dataset.day = i;
+
+                const header = document.createElement('div');
+                header.className = 'day-header';
+                header.innerHTML = `
+                    <div>${getDayName(i)}</div>
+                    <div class="day-date">${formatDate(dayDate)}</div>
+                `;
+
+                dayColumn.appendChild(header);
+                daysGrid.appendChild(dayColumn);
+            }
+        }
+
+        // Отображение событий
+        function renderEvents(events) {
+            document.querySelectorAll('.event-card').forEach(e => e.remove());
+
+            events.forEach(event => {
+                const start = new Date(event.start_time);
+                const end = new Date(event.end_time);
+                const day = (start.getDay() + 6) % 7; // Корректировка для понедельника
+
+                const dayColumn = document.querySelector(`.day-column[data-day="${day}"]`);
+                if (!dayColumn) return;
+
+                const startMinutes = (start.getHours() - workHours.start) * 60 + start.getMinutes();
+                const endMinutes = (end.getHours() - workHours.start) * 60 + end.getMinutes();
+
+                const eventElement = document.createElement('div');
+                eventElement.className = 'event-card';
+                eventElement.innerHTML = `
+                    <div class="event-actions">
+                        <button class="edit-btn" onclick="openEditModal('${event.id}')">✏️</button>
+                        <button class="delete-btn" onclick="deleteEvent('${event.id}')">🗑️</button>
+                    </div>
+                    <h3>${event.title}</h3>
+                    ${event.description ? `<p>${event.description}</p>` : ''}
+                    <small>${start.toTimeString().slice(0,5)}-${end.toTimeString().slice(0,5)}</small>
+                `;
+
+                eventElement.style.top = `${startMinutes}px`;
+                eventElement.style.height = `${endMinutes - startMinutes}px`;
+                eventElement.style.backgroundColor = event.color || var(--element-color);
+                eventElement.dataset.eventId = event.id;
+
+                dayColumn.appendChild(eventElement);
+                initDragAndResize(eventElement, event.id);
+            });
+        }
+
+        // Drag & Drop и Resize
+        function initDragAndResize(element, eventId) {
+            interact(element).draggable({
+                modifiers: [
+                    interact.modifiers.restrictRect({
+                        restriction: 'parent',
+                        endOnly: true
+                    })
+                ]
+            }).on('dragmove', event => {
+                const target = event.target;
+                const y = parseFloat(target.style.top) + event.dy;
+                target.style.top = `${y}px`;
+                updateEventTime(eventId, y, 'start');
+            });
+
+            interact(element).resizable({
+                edges: { bottom: true },
+            }).on('resizemove', event => {
+                const target = event.target;
+                const height = parseFloat(target.style.height) + event.deltaRect.bottom;
+                target.style.height = `${height}px`;
+                updateEventTime(eventId, height, 'end');
+            });
+        }
+
+        // Обновление времени события
+        async function updateEventTime(eventId, pixels, type) {
+            const minutes = pixels;
+            const hours = workHours.start + Math.floor(minutes / 60);
+            const mins = minutes % 60;
+
+            const event = events.find(e => e.id === eventId);
+            const newTime = new Date(event[`${type}_time`]);
+            newTime.setHours(hours, mins);
+
+            await fetch(`/schedule/update/${eventId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [type === 'start' ? 'start_time' : 'end_time']: newTime.toISOString() })
+            });
+        }
+
+        // Работа с модальным окном
+        function openModal(event) {
+            const modal = document.getElementById('eventModal');
+            modal.style.display = 'block';
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('eventModal');
+            modal.style.display = 'none';
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            resetModal();
+        }
+
+        function resetModal() {
+            document.getElementById('eventTitle').value = '';
+            document.getElementById('eventDesc').value = '';
+            document.getElementById('startTime').value = '';
+            document.getElementById('endTime').value = '';
+            currentEventId = null;
+        }
+
+        // Навигация по неделям
+        function changeWeek(offset) {
+            currentWeekOffset += offset;
+            initCalendar();
+        }
+
+        // Форматирование дат
+        function formatDate(date) {
+            return new Intl.DateTimeFormat('ru-RU', {
+                day: 'numeric',
+                month: 'numeric'
+            }).format(date);
+        }
+
+        // Получение начала недели
+        function getStartOfWeek() {
+            const date = new Date();
+            date.setDate(date.getDate() + currentWeekOffset * 7);
+            const day = date.getDay();
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(date.setDate(diff));
+        }
+
+        // Получение названия дня недели
+        function getDayName(dayIndex) {
+            const days = [
+                'Понедельник',
+                'Вторник',
+                'Среда',
+                'Четверг',
+                'Пятница',
+                'Суббота',
+                'Воскресенье'
+            ];
+            return days[dayIndex];
+        }
+
+        // Загрузка событий
+        async function fetchEvents() {
+            try {
+                const response = await fetch(`/schedule?week_offset=${currentWeekOffset}`);
+                const data = await response.json();
+                renderEvents(data.events);
+                updateWeekDisplay();
+            } catch (error) {
+                console.error('Ошибка загрузки событий:', error);
+            }
+        }
+
+        // Обновление отображения недели
+        function updateWeekDisplay() {
+            const startOfWeek = getStartOfWeek();
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 6);
+
+            document.getElementById('currentWeek').textContent =
+                `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}`;
+        }
+
+        // Сохранение события
+        async function saveEvent() {
+            const eventData = {
+                title: document.getElementById('eventTitle').value,
+                description: document.getElementById('eventDesc').value,
+                start_time: document.getElementById('startTime').value,
+                end_time: document.getElementById('endTime').value,
+                color: selectedColor
+            };
+
+            try {
+                const method = currentEventId ? 'PATCH' : 'POST';
+                const url = currentEventId ? `/schedule/update/${currentEventId}` : '/schedule';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(eventData)
+                });
+
+                if (response.ok) {
+                    closeModal();
+                    await fetchEvents();
+                }
+            } catch (error) {
+                console.error('Ошибка сохранения:', error);
+            }
+        }
+
+        // Удаление события
+        async function deleteEvent(eventId) {
+            if (confirm('Удалить событие?')) {
+                try {
+                    await fetch(`/schedule/delete/${eventId}`, { method: 'POST' });
+                    await fetchEvents();
+                } catch (error) {
+                    console.error('Ошибка удаления:', error);
+                }
+            }
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            initCalendar();
+            document.getElementById('colorPicker').addEventListener('click', (e) => {
+                if (e.target.classList.contains('color-option')) {
+                    selectedColor = e.target.style.backgroundColor;
+                    document.querySelectorAll('.color-option').forEach(opt =>
+                        opt.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

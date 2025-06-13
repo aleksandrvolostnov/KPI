@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактирование профиля</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Century+Gothic:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #161A1D;
+            --secondary-bg: rgba(30, 34, 39, 0.9);
+            --accent-color: #A4161A;
+            --hover-color: #2A2F36;
+            --text-color: #F5F3F4;
+            --input-bg: rgba(42, 47, 52, 0.6);
+            --border-color: #3C3C3C;
+            --transition-speed: 0.2s;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        body {
+            background: var(--primary-bg);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .edit-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            background: var(--secondary-bg);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            color: var(--accent-color);
+            font-weight: normal;
+            margin: 0 0 20px 0;
+            font-size: 28px;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        h2 {
+            color: var(--text-color);
+            font-weight: normal;
+            margin: 0 0 30px 0;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .profile-form {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .form-group {
+            width: 100%;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--accent-color);
+            font-size: 16px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--primary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 16px;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(164,22,26,0.3);
+        }
+
+        .avatar-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .avatar-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--accent-color);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .file-input-wrapper {
+            width: 100%;
+        }
+
+        .file-label {
+            display: block;
+            background: var(--accent-color);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            font-size: 16px;
+            font-weight: normal;
+            box-shadow: 0 3px 10px rgba(164,22,26,0.3);
+        }
+
+        .file-label:hover {
+            background: #C41E24;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(164,22,26,0.4);
+        }
+
+        #avatar {
+            display: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: normal;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: 0 3px 10px rgba(164,22,26,0.3);
+        }
+
+        .btn-primary:hover {
+            background: #C41E24;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(164,22,26,0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(164,22,26,0.1);
+        }
+
+        @media (max-width: 576px) {
+            body {
+                padding: 15px;
+                align-items: flex-start;
+            }
+
+            .edit-container {
+                padding: 25px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            h2 {
+                font-size: 18px;
+            }
+
+            .avatar-preview {
+                width: 100px;
+                height: 100px;
+            }
+        }
+    </style>
+    {% extends 'base.html' %}
+    {% block title %}Дашборд{% endblock %}
+{% block content %}
+</head>
+<body>
+    <div class="edit-container">
+        <h1>Редактирование профиля</h1>
+        <h2>{{ user.username }}</h2>
+
+        <form method="POST" enctype="multipart/form-data" class="profile-form">
+            <div class="avatar-section">
+                <div id="avatarPreviewContainer" {% if not user.avatar %}style="display: none;"{% endif %}>
+                    <img id="avatarPreview" class="avatar-preview" src="{{ url_for('uploaded_file', filename=user.avatar) if user.avatar else '' }}" alt="Аватар">
+                </div>
+
+                <div class="file-input-wrapper">
+                    <label for="avatar" class="file-label">Выбрать аватар</label>
+                    <input type="file" id="avatar" name="avatar" accept="image/*" onchange="previewImage(event)">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" class="form-control" value="{{ user.email or '' }}" placeholder="Введите email">
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Телефон</label>
+                <input type="text" id="phone" name="phone" class="form-control" value="{{ user.phone or '' }}" placeholder="Введите телефон">
+            </div>
+
+            <button type="submit" class="btn btn-secondary">Сохранить изменения</button>
+        </form>
+    </div>
+{% endblock %}
+    {% block extra_js %}
+    <script>
+        function previewImage(event) {
+            const input = event.target;
+            const previewContainer = document.getElementById('avatarPreviewContainer');
+            const previewImage = document.getElementById('avatarPreview');
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+{% endblock %}
+</body>
+</html>

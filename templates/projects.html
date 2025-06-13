@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проекты</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Century Gothic', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px 40px;
+            position: relative;
+            flex-direction: column;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            text-align: center;
+            font-family: 'Century Gothic', sans-serif;
+            font-weight: normal;
+        }
+
+        .button {
+            background-color: var(--text-color);
+            color: var(--primary-bg);
+            padding: 12px 20px;
+            border-radius: 15px;
+            text-decoration: none;
+            font-size: 1em;
+            transition: 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .button:hover {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            transform: translateY(-5px);
+        }
+
+        .dashboard-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #d3d3d3;
+            color: var(--primary-bg);
+            padding: 12px 20px;
+            border-radius: 15px;
+            font-size: 1em;
+            text-decoration: none;
+            transition: 0.3s ease;
+        }
+
+        .dashboard-button:hover {
+            background-color: var(--primary-bg);
+            color: #d3d3d3;
+        }
+
+        .projects-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 40px;
+        }
+
+        .project-card {
+            background: var(--primary-bg);
+            border-radius: 15px;
+            width: 300px;
+            padding: 20px;
+            text-align: center;
+            transition: 0.3s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .project-card h3 {
+            margin: 0 0 15px;
+            font-size: 1.8em;
+            padding-bottom: 10px;
+            font-family: 'Century Gothic', sans-serif;
+            font-weight: normal;
+            color: var(--text-color);
+        }
+        p, strong {
+        font-family: 'Century Gothic', sans-serif;
+        font-weight: normal; /* Устанавливаем нормальный вес шрифта */
+        font-size: 1.08em;
+        color: var(--text-color);
+    }
+
+    strong {
+        font-weight: normal; /* Для <strong> убираем жирность */
+    }
+        .project-card p {
+            font-size: 1em;
+            color: var(--text-color);
+            font-weight: normal;
+        }
+
+        .project-card a {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: var(--text-color);
+            color: var(--primary-bg);
+            text-decoration: none;
+            border-radius: 10px;
+            transition: 0.3s ease;
+        }
+
+        .project-card a:hover {
+            background-color: var(--primary-bg);
+            transform: translateY(-5px);
+        }
+    </style>
+    {% extends 'base.html' %}
+    {% block title %}Дашборд{% endblock %}
+{% block content %}
+</head>
+<body>
+    <header class="header">
+        <h1>Мои проекты</h1>
+        <a href="{{ url_for('create_project') }}" class="button"><i class="fas fa-plus"></i> Новый проект</a>
+    </header>
+
+    <div class="projects-container">
+        {% for project in projects %}
+        <div class="project-card" onclick="window.location='{{ url_for('project_tasks', project_id=project.id) }}'">
+            <h3 class="project-name">{{ project.name }}</h3>
+            <p><strong>Описание:</strong> {{ project.description }}</p>
+            <p><strong>Дата создания:</strong> {{ project.created_at.strftime('%d-%m-%Y') }}</p>
+            <a href="{{ url_for('project_detail', project_id=project.id) }}">
+                <i class="fas fa-eye"></i> Подробнее
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}
+    {% block extra_js %}
+    <script>
+        // Генерация случайного цвета
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        document.querySelectorAll('.project-card').forEach(card => {
+            const randomColor = getRandomColor(); // Один случайный цвет для всей карточки
+
+            // Применяем один и тот же случайный цвет ко всем элементам внутри карточки
+            card.style.border = `2px solid ${randomColor}`; // Граница
+            card.querySelector('h3').style.color = randomColor; // Название проекта
+            card.querySelector('h3').style.borderBottom = `2px solid ${randomColor}`; // Подчёркивание названия
+            card.style.boxShadow = `0 6px 15px ${randomColor}`; // Тень
+             // Применяем тот же цвет для кнопки "Подробнее"
+    const button = card.querySelector('a'); // Кнопка "Подробнее"
+    if (button) {
+        button.style.backgroundColor = randomColor; // Фон кнопки
+        button.style.border = `2px solid ${randomColor}`; // Граница кнопки
+    }
+        });
+    </script>
+{% endblock %}
+</body>
+</html>

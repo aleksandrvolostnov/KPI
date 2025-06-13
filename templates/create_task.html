@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание задачи</title>
+
+    <!-- Подключаем Choices.js -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+    <!-- Подключаем flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <style>
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            background-size: cover;
+            background-position: center;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+            margin-left: 400px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 32px;
+            text-align: center;
+            font-weight: normal;
+        }
+        .form-container {
+            background-color: var(--secondary-bg);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.9);
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        input[type="text"],
+        input[type="date"],
+        .choices__inner,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid var(--text-color);
+            border-radius: 10px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 16px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-sizing: border-box;
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+        }
+        .choices__list .choices__item:hover {
+        background-color: var(--secondary-bg) !important;
+        color: var(--accent-color) !important;
+        border: none !important;
+
+    }
+            .choices__list .choices__item {
+        background-color: var(--secondary-bg) !important;
+        color: var(--text-color) !important;
+        border: none !important;
+    }
+
+        .button {
+            background-color: var(--text-color);
+            color: var(--primary-bg);
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'Century Gothic', sans-serif;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .button:hover {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+        }
+
+        .file-upload-button {
+            background-color: var(--text-color);
+            color: var(--primary-bg);
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 95%;
+            text-align: center;
+            display: block;
+            margin-bottom: 15px;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        .file-upload-button:hover {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+        }
+
+        .file-list {
+            list-style-type: none;
+            padding-left: 0;
+            text-align: center;
+        }
+
+        .file-list li {
+            color: var(--primary-bg);
+            font-family: 'Century Gothic', sans-serif;
+            margin-bottom: 5px;
+        }
+
+        .file-list a {
+            color: var(--secondary-bg);
+            text-decoration: underline;
+            display: inline-block;
+        }
+
+        .file-list a:hover {
+            color: var(--primary-bg);
+        }
+
+        .flash {
+            color: red;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+
+        /* Стили для контейнера с датой */
+        .datetime-container {
+            width: 100%; /* Устанавливаем ширину 100% для контейнера */
+        }
+
+        /* Стили для кастомного календаря flatpickr */
+        #datetime-local {
+            padding: 12px;
+            border: 2px solid #3C3C3C;
+            border-radius: 10px;
+            font-family: 'Century Gothic', sans-serif;
+            font-size: 16px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: black;
+            width: 300%; /* Устанавливаем ширину 100% для поля с датой */
+        }
+
+        .flatpickr-calendar {
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .flatpickr-month {
+            background-color: #F9D8B1;
+            color: black;
+            border-radius: 8px;
+        }
+
+        .flatpickr-day:hover {
+            background-color: #3C3C3C;
+            color: white;
+        }
+
+        .flatpickr-day.selected {
+            background-color: #3C3C3C;
+            color: white;
+        }
+
+        /* Стили для плейсхолдера */
+        datetime-local::placeholder {
+            color: #A0A0A0;
+            font-family: 'Century Gothic';
+        }
+
+
+    </style>
+    {% extends 'base.html' %}
+    {% block title %}Дашборд{% endblock %}
+{% block content %}
+</head>
+<body>
+    <div class="container">
+        <h1>
+            {% if project %}
+                Создание задачи для проекта "{{ project.name }}"
+            {% else %}
+                Создание задачи
+            {% endif %}
+        </h1>
+
+        <div class="form-container">
+            <form method="POST" action="{{ url_for('create_task', project_id=project.id if project else None) }}" enctype="multipart/form-data">
+                <input type="text" name="title" placeholder="Название задачи" required>
+                <input type="text" name="description" placeholder="Описание задачи" required>
+
+                <select name="priority" id="priority" required>
+                    <option value="">Выберите приоритет</option>
+                    <option value="Низкий">Низкий приоритет (не срочный)</option>
+                    <option value="Средний">Средний приоритет (важный)</option>
+                    <option value="Высокий">Высокий приоритет (критический)</option>
+                </select>
+
+                <!-- Используем flatpickr для выбора даты -->
+                <div class="datetime-container">
+                    <input type="text" name="due_date" id="due_date" placeholder="Выберите дату и время" required>
+                </div>
+
+                <select name="difficulty" id="difficulty" required>
+                    <option value="">Выберите сложность</option>
+                    <option value="1">Краткосрочные (до 2 часов)</option>
+                    <option value="2">Среднесрочные (от 2 до 8 часов)</option>
+                    <option value="3">Долгосрочные (более 8 часов)</option>
+                </select>
+
+                <select name="status" id="status" required>
+                    <option value="In Progress">В процессе</option>
+                    <option value="Completed">Выполнено</option>
+                </select>
+
+                <select name="assigned_to" id="assigned_to" required>
+                    <option value="">Выберите исполнителя</option>
+                    {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- Поле для комментариев -->
+                <textarea name="comments" placeholder="Комментарии к задаче" rows="4"></textarea>
+
+                <label class="file-upload-button" for="file-upload">Добавить файлы</label>
+                <input id="file-upload" type="file" name="task_files[]" multiple style="display:none;" onchange="updateFileList()">
+
+                <ul id="file-list" class="file-list"></ul>
+
+                <button type="submit" class="button">Создать задачу</button>
+            </form>
+
+
+        </div>
+    </div>
+{% endblock %}
+    {% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const elements = document.querySelectorAll('select');
+            elements.forEach(function (element) {
+                new Choices(element, {
+                    searchEnabled: false,
+                    itemSelectText: '',
+                });
+            });
+
+            // Инициализация flatpickr
+            flatpickr("#due_date", {
+                dateFormat: "Y-m-d",  // Формат даты
+                minDate: "today",     // Ограничение на минимальную дату (сегодня)
+                enableTime: false,    // Без времени
+                theme: "dark",
+            });
+        });
+
+        function updateFileList() {
+            const input = document.getElementById('file-upload');
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = '';
+
+            for (let i = 0; i < input.files.length; i++) {
+                const file = input.files[i];
+                const listItem = document.createElement('li');
+                listItem.textContent = file.name;
+                fileList.appendChild(listItem);
+            }
+        }
+    </script>
+{% endblock %}
+</body>
+</html>

@@ -1,0 +1,109 @@
+<<<<<<< HEAD
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль пользователя</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            background-image: url('{{ url_for("static", filename="images/tasks.jpg") }}');
+            background-size: cover;
+            background-position: center;
+            font-family: 'Century Gothic', sans-serif;
+            color: #3C3C3C;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 32px;
+            text-align: center;
+            font-weight: normal;
+        }
+
+        .profile-info {
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .profile-info p {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .profile-info .user-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #3C3C3C;
+            margin-bottom: 20px;
+        }
+
+        .profile-info .user-avatar-icon {
+            font-size: 40px;
+            color: lightgray;
+            margin-bottom: 20px;
+        }
+
+        .menu-button {
+            background-color: #3C3C3C;
+            color: lightgray;
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            width: 92%;
+            max-width: 500px;
+            transition: background-color 0.3s ease;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        .menu-button:hover {
+            background-color: #1C1C1C;
+        }
+        .profile-info strong {
+            font-family: 'Century Gothic', sans-serif;
+            font-weight: normal;
+            font-size: 1.2em;
+            color: #3C3C3C;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Профиль пользователя</h1>
+        <div class="profile-info">
+            {% if user.avatar %}
+                <img src="{{ url_for('uploaded_file', filename=user.avatar) }}" alt="Аватарка" class="user-avatar">
+            {% else %}
+                <i class="fas fa-user-circle user-avatar-icon"></i>
+            {% endif %}
+            <p><strong>Имя пользователя:</strong> {{ user.username }}</p>
+            <p><strong>Email:</strong> {{ user.email or 'Не указан' }}</p>
+            <p><strong>Телефон:</strong> {{ user.phone or 'Не указан' }}</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="menu-button">Назад на дэшборд</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Диаграмма Ганта</title>
+    <link rel="stylesheet" href="https://cdn.anychart.com/releases/8.10.0/css/anychart-ui.min.css" />
+    <style>
+    /* Основные стили */
+    body {
+        font-family: "Century Gothic", sans-serif;
+        background-color: var(--primary-bg);
+        color: var(--text-color);
+        margin: 0;
+        padding: 0;
+        display: flex;
+    }
+
+    #app {
+        display: flex;
+        width: 100%;
+        height: 100vh;
+    }
+
+    /* Стили боковой панели */
+    .sidebar {
+        width: 280px;
+        background-color: var(--primary-bg);
+        color: var(--text-color);
+        padding: 20px;
+        font-weight: normal;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+    }
+
+    .sidebar h2 {
+        font-size: 1.6em;
+        color: var(--accent-color);
+        font-weight: normal;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    .sidebar ul {
+        list-style-type: none;
+        padding: 0;
+        font-family: "Century Gothic", sans-serif;
+        font-weight: normal;
+    }
+
+    .sidebar li {
+        background-color: var(--secondary-bg);
+        color: var(--text-color);
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: normal;
+        transition: 0.3s;
+    }
+    li {
+        font-family: "Century Gothic", sans-serif;
+        font-weight: normal;
+    }
+    .sidebar li:hover {
+        background-color: var(--primary-bg);
+        color: var(--text-color);
+    }
+
+    /* Основной контент */
+    .main-content {
+        flex-grow: 1;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--primary-bg);
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: normal;
+        color: var(--text-color);
+    }
+
+    .header h2 {
+        margin: 0;
+        font-weight: normal;
+    }
+
+    /* Центрирование кнопки "Создать задачу" */
+    .center-button {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .center-button .button {
+        background-color: var(--accent-color);
+        color: #d3d3d3;
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 1em;
+        max-width: 110px;
+        text-align: center;
+        font-family: 'Century Gothic', sans-serif;
+        transition: background-color 0.3s, transform 0.3s;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        text-decoration: none;
+        font-weight: normal;
+        font-size: 1em;
+        margin-left: 10px;
+    }
+
+    .center-button .button:hover {
+        background-color: var(--accent-color);
+        transform: translateY(-5px);
+    }
+
+    .center-button .function-button {
+        background-color: var(--accent-color);
+        color: #d3d3d3;
+        padding: 15px;
+        border-radius: 10px;
+        font-size: 1em;
+        max-width: 200px;
+        text-align: center;
+        transition: background-color 0.3s, transform 0.3s;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        text-decoration: none;
+    }
+
+    .center-button .function-button:hover {
+        background-color: var(--accent-color);
+        transform: translateY(-5px);
+    }
+
+    /* Стили для кнопки и комментариев */
+    button {
+        background-color: var(--secondary-bg);
+        color: var(--text-color);
+        padding: 10px 15px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-family: 'Century Gothic', sans-serif;
+        font-size: 14px;
+        transition: background-color 0.3s ease;
+        text-decoration: none;
+        display: block;
+        margin-top: 10px;
+        text-align: center;
+        width: 15%;
+        box-sizing: border-box;
+    }
+
+    button:hover {
+        background-color: var(--text-color);
+        color: var(--primary-bg);
+    }
+
+    .gantt-chart-container {
+    margin-top: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    background: var(--primary-bg);
+    height: 400px; /* Увеличение высоты для лучшего отображения */
+}
+
+.anychart-credits {
+    display: none; /* Скрытие логотипа AnyChart */
+}
+
+
+
+    .comments {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: var(--secondary-bg);
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        height: 150px;
+    }
+
+    .comments h4 {
+        color: var(--text-color);
+        margin-bottom: 10px;
+        font-weight: normal;
+    }
+
+
+
+    /* Стили для textarea */
+    textarea {
+        width: 90%;
+        padding: 12px;
+        margin-bottom: 15px;
+        border: 2px solid var(--text-color);
+        border-radius: 10px;
+        font-family: 'Century Gothic', sans-serif;
+        font-size: 16px;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        box-sizing: border-box;
+        font-weight: normal;
+        background-color: var(--secondary-bg);
+        color: var(--text-color);
+    }
+
+    /* Позиционирование кнопки "Добавить комментарий" */
+    .add-comment-btn {
+    margin-bottom: 25px; /* Увеличиваем отступ сверху */
+    margin-left: 10px;
+    background-color: var(--text-color);
+    color: #161A1D;
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+
+    .add-comment-btn:hover {
+        background-color: var(--primary-bg);
+        color: var(--text-color);
+    }
+    /* Стили для модального окна */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color:var(--secondary-bg);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .modal-content {
+        background-color: var(--primary-bg);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        width: 400px; /* Устанавливаем ширину окна */
+        max-width: 90%;
+    }
+
+    .modal-content h3 {
+        margin-top: 0;
+        color: var(--text-color);
+        font-weight: normal;
+    }
+    h3 {
+        margin-top: 0;
+        color: var(--accent-color);
+        font-weight: normal;
+        font-size: 1.4em;
+    }
+    h4 {
+        font-family: 'Century Gothic', sans-serif;
+        font-weight: normal;
+    }
+    .modal-content input {
+        width: 95%;
+        padding: 10px;
+        margin: 5px 0;
+        font-family: 'Century Gothic', sans-serif;
+        border-radius: 8px;
+        border: 1px solid var(--text-color);
+    }
+
+    .modal-content button {
+        background-color: var(--text-color);
+        color: var(--primary-bg);
+        padding: 10px 15px;
+        border-radius: 10px;
+        font-size: 14px;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 10px;
+        border: none;
+    }
+
+    .modal-content button:hover {
+        background-color: var(--primary-bg);
+        color: var(--text-color);
+    }
+    /* Стили контейнеров */
+    .container {
+        margin-top: 10px;
+        padding: 10px;
+        background-color: var(--secondary-bg);
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        max-height: 250px;
+        overflow-y: auto;
+    }
+    .subtasks-container {
+        margin-bottom: 0px;
+        margin-right: 10px;
+
+    }
+
+    .comments-container {
+        margin-top: 10px;
+        margin-left: 0px;
+
+    }
+
+    .small-button {
+        background-color: var(--secondary-bg);
+        color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px; /* Фиксированная ширина */
+    height: 50px; /* Фиксированная высота */
+    font-size: 20px; /* Размер значков */
+    padding: 0; /* Убираем дополнительные отступы */
+    border-radius: 6px; /* Округление кнопки */
+}
+    .small-button:hover {
+        background-color: var(--secondary-bg);
+        color: var(--accent-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px; /* Фиксированная ширина */
+    height: 50px; /* Фиксированная высота */
+    font-size: 20px; /* Размер значков */
+    padding: 0; /* Убираем дополнительные отступы */
+    border-radius: 6px; /* Округление кнопки */
+}
+
+
+    </style>
+    {% extends 'base.html' %}
+    {% block title %}Дашборд{% endblock %}
+{% block content %}
+</head>
+<body>
+    <div id="app">
+        <!-- Боковая панель -->
+        <div class="sidebar">
+            <h2>Список задач</h2>
+            <ul>
+                <li v-for="task in tasks" :key="task.id" @click="selectTask(task)">
+                    Название задачи: [[ task.title ]]<br>
+                    Крайний срок: [[ task.due_date ]]<br>
+                    Ответственный: [[ task.assigned_to ]]
+                </li>
+            </ul>
+            <div class="center-button">
+                <a href="{{ url_for('create_task') }}" class="function-button">Создать задачу</a>
+                <b href class="button" v-if="selectedTask" @click="showSubtaskForm">Добавить подзадачу</b>
+            </div>
+
+        </div>
+
+        <!-- Основной контент -->
+        <div class="main-content">
+            <div class="header">
+                <h2>Диаграмма Ганта</h2>
+            </div>
+            <div v-if="selectedTask">
+                <h3>[[ selectedTask.title ]]</h3>
+
+                <!-- Диаграмма Ганта -->
+                <div class="gantt-chart-container" id="gantt-chart"></div>
+                <!-- Секция подзадач -->
+
+                <div style="display: flex; gap: 20px; font-weight: normal;">
+    <!-- Контейнер для подзадач -->
+    <div class="container subtasks-container" style="flex: 1; font-weight: normal;">
+    <h4>Подзадачи</h4>
+    <ul>
+        <li v-for="subtask in selectedTask.subtasks" :key="subtask.id" style="display: flex; justify-content: space-between; align-items: center; font-weight: normal;">
+            <span>[[ subtask.title ]] - [[ subtask.start_date ]] до [[ subtask.end_date ]]</span>
+            <div style="display: flex; gap: 10px; font-weight: normal;">
+                <button class="small-button" @click="editSubtask(subtask)">✎</button>
+                <button class="small-button" @click="deleteSubtask(subtask.id)">🗑</button>
+            </div>
+        </li>
+    </ul>
+</div>
+
+    <!-- Контейнер для комментариев -->
+    <div class="container comments-container" style="flex: 1;">
+        <h4>Оставленные комментарии</h4>
+        <ul>
+            <li v-for="comment in selectedTask.comments" :key="comment.id" class="comment-item">
+                <span>[[ comment.comment ]]</span>
+                <div>
+                    <button class="small-button" @click="editComment(comment)">✎</button>
+                    <button class="small-button" @click="deleteComment(comment.id)">🗑</button>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
+                <!-- Секция комментариев -->
+                <div class="comments">
+                    <h4>Комментарии</h4>
+                    <ul>
+                        <li v-for="comment in selectedTask.comments" :key="comment.id">
+                            [[ comment.comment ]] - [[ comment.task_id ]] - [[ comment.user_id ]]
+                        </li>
+                    </ul>
+                    <div style="display: flex; align-items: center;">
+                        <textarea v-model="newComment" placeholder="Оставьте комментарий..."></textarea>
+                        <button @click="addComment" class="add-comment-btn">Добавить комментарий</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно для подзадач -->
+        <div v-if="showSubtaskModal" class="modal">
+            <div class="modal-content">
+                <h3>[[ subtaskForm.id ? "Редактировать подзадачу" : "Новая подзадача" ]]</h3>
+                <label>Название</label>
+                <input type="text" v-model="subtaskForm.title" placeholder="Название подзадачи">
+                <label>Начало</label>
+                <input type="date" v-model="subtaskForm.start_date">
+                <label>Конец</label>
+                <input type="date" v-model="subtaskForm.end_date">
+                <button @click="saveSubtask">Сохранить</button>
+                <button @click="closeSubtaskModal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+    {% block extra_js %}
+
+    <!-- Подключение Vue и AnyChart -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script src="https://cdn.anychart.com/releases/8.10.0/js/anychart-bundle.min.js"></script>
+    <script>
+    const tasksData = {{ tasks_data | tojson | safe }};
+    new Vue({
+        el: '#app',
+        delimiters: ['[[', ']]'],
+        data: {
+            tasks: tasksData,
+            selectedTask: null,
+            newComment: '',
+            subtaskForm: { id: null, title: '', start_date: '', end_date: '' },
+            showSubtaskModal: false,
+            chart: null
+        },
+        mounted() {
+            if (this.tasks.length) {
+                this.selectTask(this.tasks[0]);
+            }
+        },
+        methods: {
+            selectTask(task) {
+                this.selectedTask = task;
+                this.loadComments(task.id); // Загружаем комментарии
+                this.loadGanttChart(task);
+            },
+            loadComments(taskId) {
+                fetch(`/task/${taskId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.comments) {
+                            this.selectedTask.comments = data.comments;
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Ошибка при загрузке комментариев:", error);
+                    });
+            },
+            loadGanttChart(task) {
+                anychart.onDocumentReady(() => {
+                    const data = [
+                        {
+                            id: task.id,
+                            name: task.title,
+                            actualStart: task.created_at,
+                            actualEnd: task.due_date,
+                            children: task.subtasks.map(subtask => ({
+                                id: subtask.id,
+                                name: subtask.title,
+                                actualStart: subtask.start_date,
+                                actualEnd: subtask.end_date,
+                            }))
+                        }
+                    ];
+                    if (this.chart) {
+                        this.chart.data(data, 'as-tree');
+                    } else {
+                        this.chart = anychart.ganttProject();
+                        this.chart.data(data, 'as-tree');
+                        this.chart.container('gantt-chart');
+                        this.chart.draw();
+                    }
+                });
+            },
+            addComment() {
+                if (!this.newComment.trim()) {
+                    alert("Комментарий не может быть пустым!");
+                    return;
+                }
+
+                fetch(`/task/${this.selectedTask.id}/add_comment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ comment: this.newComment.trim() })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        this.selectedTask.comments.push(data.comment); // Обновляем комментарии
+                        this.newComment = '';
+                    } else {
+                        alert("Ошибка: " + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert("Ошибка подключения к серверу.");
+                    console.error(error);
+                });
+            },
+            editComment(comment) {
+                const newComment = prompt("Измените комментарий:", comment.comment);
+                if (!newComment || !newComment.trim()) return;
+
+                fetch(`/task/${this.selectedTask.id}/edit_comment/${comment.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ comment: newComment.trim() })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const index = this.selectedTask.comments.findIndex(c => c.id === comment.id);
+                        if (index !== -1) this.selectedTask.comments[index] = data.comment;
+                    } else {
+                        alert("Ошибка: " + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert("Ошибка подключения к серверу.");
+                    console.error(error);
+                });
+            },
+            deleteComment(commentId) {
+                if (!confirm("Вы уверены, что хотите удалить этот комментарий?")) return;
+
+                fetch(`/task/${this.selectedTask.id}/delete_comment/${commentId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        this.selectedTask.comments = this.selectedTask.comments.filter(c => c.id !== commentId);
+                    } else {
+                        alert("Ошибка: " + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert("Ошибка подключения к серверу.");
+                    console.error(error);
+                });
+            },
+            showSubtaskForm() {
+                this.subtaskForm = { id: null, title: '', start_date: '', end_date: '' };
+                this.showSubtaskModal = true;
+            },
+            closeSubtaskModal() {
+                this.showSubtaskModal = false;
+            },
+            saveSubtask() {
+                if (!this.subtaskForm.title || !this.subtaskForm.start_date || !this.subtaskForm.end_date) {
+                    alert("Заполните все поля!");
+                    return;
+                }
+                const url = this.subtaskForm.id ? '/update_subtask' : '/create_subtask';
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...this.subtaskForm, task_id: this.selectedTask.id })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        if (this.subtaskForm.id) {
+                            const index = this.selectedTask.subtasks.findIndex(s => s.id === this.subtaskForm.id);
+                            this.selectedTask.subtasks[index] = data.subtask;
+                        } else {
+                            this.selectedTask.subtasks.push(data.subtask);
+                        }
+                        this.loadGanttChart(this.selectedTask);
+                        this.closeSubtaskModal();
+                    }
+                });
+            },
+            editSubtask(subtask) {
+                this.subtaskForm = { ...subtask };
+                this.showSubtaskModal = true;
+            },
+            deleteSubtask(subtaskId) {
+                fetch(`/delete_subtask/${subtaskId}`, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        this.selectedTask.subtasks = this.selectedTask.subtasks.filter(s => s.id !== subtaskId);
+                        this.loadGanttChart(this.selectedTask);
+                    }
+                });
+            }
+        }
+    });
+</script>
+{% endblock %}
+</body>
+</html>

@@ -1,0 +1,15 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+psycopg2-binary
+datetime
+csv
+io
+calendar
+babel
+locale
+os
+openpyxl
+werkzeug
+json
+hashlib

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактировать проект</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Century Gothic', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #161A1D;
+            color: #D3D3D3;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 50px auto;
+            background-color: rgba(42, 47, 52, 1);
+            color: #d3d3d3; /* Светлый текст */
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2em;
+            font-family: 'Century Gothic', sans-serif;
+            font-weight: normal;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label, input, textarea, button {
+            font-family: 'Century Gothic', sans-serif;
+            font-weight: normal;
+        }
+
+        label {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            margin-top: 15px;
+        }
+
+        input, textarea {
+            font-size: 1.2em;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #d3d3d3;
+            background-color: rgba(42, 47, 52, 1); /* Темный полупрозрачный фон */
+            color: #d3d3d3; /* Светлый текст */
+            transition: background-color 0.3s ease, border 0.3s ease;
+            width: 94%;
+        }
+
+        input:focus, textarea:focus {
+            background-color: #161A1D; /* Более темный фон при фокусе */
+            border: 2px solid #d3d3d3;
+            color: #d3d3d3;
+        }
+
+        button {
+            font-size: 1em;
+            padding: 10px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            background-color: #d3d3d3;
+            color: #161A1D;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #d3d3d3;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            text-decoration: none;
+            color: #d3d3d3;
+            font-size: 1em;
+            transition: 0.3s ease;
+        }
+
+        .back-link a:hover {
+            color: #D1D1D1;
+        }
+    </style>
+    {% extends 'base.html' %}
+    {% block title %}Дашборд{% endblock %}
+{% block content %}
+</head>
+<body>
+    <div class="container">
+        <h1>Редактировать проект</h1>
+        <form action="{{ url_for('edit_project', project_id=project.id) }}" method="POST">
+            <label for="name">Название проекта</label>
+            <input type="text" id="name" name="name" value="{{ project.name }}" required>
+
+            <label for="description">Описание</label>
+            <textarea id="description" name="description" rows="5">{{ project.description }}</textarea>
+
+            <button type="submit"><i class="fas fa-save"></i> Сохранить изменения</button>
+        </form>
+        <div class="back-link">
+            <a href="{{ url_for('project_detail', project_id=project.id) }}"><i class="fas fa-arrow-left"></i> Вернуться к проекту</a>
+        </div>
+    </div>
+{% endblock %}
+</body>
+</html>

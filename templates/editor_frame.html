@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактор документа</title>
+    <style>
+        /* Стили для body */
+        body {
+            font-family: 'Century Gothic', sans-serif;
+            background-size: cover; /* Изображение будет растягиваться на весь экран */
+            background-position: center; /* Центрирование изображения */
+            background-attachment: fixed; /* Фиксация фона при прокрутке */
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            background-size: cover; /* Изображение будет растягиваться на весь экран */
+            background-position: center; /* Центрирование изображения */
+
+            margin: 0;
+            padding: 0;
+            height: 100vh; /* Занимает всю высоту окна */
+        }
+
+        /* Контейнер для контента */
+        .container {
+            padding: 20px;
+            max-width: 1200px; /* Увеличение максимальной ширины контейнера */
+            margin: 0 auto;
+            position: relative;
+            z-index: 1; /* Убедимся, что текст будет отображаться поверх фона */
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: normal;
+
+        }
+
+        /* Контейнер для редактора */
+        #editor {
+            width: 100%; /* Устанавливаем ширину на 100% */
+            height: 80vh; /* Устанавливаем высоту контейнера на 80% от высоты окна */
+            background-color: var(--secondary-bg);
+            border-radius: 20px; /* Закругленные углы с радиусом 20px */
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5); /* Тень вокруг контейнера */
+            margin: 0 auto;
+        }
+
+        /* Стиль для кнопки "Дэшборд" */
+        .dashboard-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1em;
+            text-decoration: none;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            font-family: 'Century Gothic', sans-serif;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .dashboard-button:hover {
+            background-color: var(--secondary-bg);
+            transform: translateY(-5px);
+        }
+
+    </style>
+    <script src="http://127.0.0.1:80/web-apps/apps/api/documents/api.js"></script>
+</head>
+<body>
+    <!-- Кнопка "Дэшборд" -->
+    <a href="{{ url_for('editor_page') }}" class="dashboard-button">Назад</a>
+
+    <div class="container">
+        <h1>Редактирование документа: {{ document_config['document']['title'] }}</h1>
+
+        <!-- Контейнер для редактора -->
+        <div id="editor"></div>
+
+        <script>
+
+            console.log("Документная конфигурация:", {{ document_config | tojson | safe }});
+
+            try {
+                var docEditor = new DocsAPI.DocEditor("editor", {
+                    "document": {
+                        "fileType": "{{ document_config.document.fileType }}",
+                        "key": "{{ document_config.document.key }}",
+                        "title": "{{ document_config.document.title }}",
+                        "url": "{{ document_config.document.url }}",
+                        "permissions": { "edit": true }
+                    },
+                    "editorConfig": {
+                        "callbackUrl": "{{ document_config.editorConfig.callbackUrl }}",
+                        "mode": "edit",
+                        "lang": "ru",
+                        "user": {
+                            "id": "{{ document_config.editorConfig.user.id }}",
+                            "name": "{{ document_config.editorConfig.user.name }}"
+                        }
+                    },
+                    "events": {
+                        "onAppReady": function() {
+                            console.log("Приложение готово.");
+                        },
+                        "onDocumentStateChange": function(event) {
+                            console.log("Состояние документа изменилось:", event);
+                        },
+                        "onError": function(event) {
+                            console.error("Ошибка в редакторе:", event);
+                            if (event && event.data) {
+                                console.error("Подробности ошибки:", event.data);
+                            }
+                        }
+                    }
+                });
+
+                console.log("Редактор успешно инициализирован:", docEditor);
+            } catch (error) {
+                console.error("Ошибка при инициализации редактора:", error);
+            }
+        </script>
+
+    </div>
+</body>
+</html>

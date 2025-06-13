@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рулетка</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #ffecd2, #fcb69f);
+            color: #333;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .roulette-container {
+            position: relative;
+            margin: 20px auto;
+            width: 300px;
+            height: 300px;
+            border: 10px solid #333;
+            border-radius: 50%;
+            overflow: hidden;
+            background: url('static/images/roulette.png') no-repeat center center;
+            background-size: cover;
+        }
+
+        .ball {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 2s ease-out;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .result {
+            font-size: 20px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .tokens-info {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .input-group {
+            margin: 20px 0;
+        }
+
+        .input-group select,
+        .input-group input {
+            padding: 10px;
+            font-size: 16px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Рулетка</h1>
+        <div class="tokens-info">
+            Ваши жетоны: <span id="tokens">{{ tokens }}</span>
+        </div>
+
+        <div class="input-group">
+            <label for="bet_amount">Ставка: </label>
+            <input type="number" id="bet_amount" min="1" value="10">
+        </div>
+
+        <div class="input-group">
+            <label for="bet_type">Тип ставки: </label>
+            <select id="bet_type">
+                <option value="color">Цвет</option>
+                <option value="range">Диапазон</option>
+                <option value="number">Конкретное число</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="bet_value">Значение: </label>
+            <input type="text" id="bet_value" placeholder="красное, 0 или 0-14">
+        </div>
+
+        <button id="spinButton" class="btn">Вращать рулетку</button>
+        <p class="result" id="result"></p>
+
+        <!-- Рулетка -->
+        <div class="roulette-container" id="rouletteWheel">
+            <div class="ball" id="rouletteBall"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('spinButton').addEventListener('click', async () => {
+            const betAmount = parseInt(document.getElementById('bet_amount').value);
+            const betType = document.getElementById('bet_type').value;
+            const betValue = document.getElementById('bet_value').value;
+
+            const response = await fetch('/roulette', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bet_amount: betAmount, bet_type: betType, bet_value: betValue }),
+            });
+
+            const data = await response.json();
+            if (data.status === 'error') {
+                alert(data.message);
+            } else {
+                document.getElementById('result').textContent = `Результат: ${data.result.rolled_number} (${data.result.rolled_color}). ${data.message} Выигрыш: ${data.result.winnings}`;
+                document.getElementById('tokens').textContent = data.result.available_tokens;
+
+                // Запуск анимации рулетки
+                animateRoulette(data.result.rolled_number);
+            }
+        });
+
+        function animateRoulette(number) {
+            const ball = document.getElementById('rouletteBall');
+            const wheel = document.getElementById('rouletteWheel');
+            const rotation = (number * 360) / 37; // Учитываем 37 чисел в рулетке
+
+            // Начинаем анимацию шарика в противоположную сторону
+            ball.style.transition = 'transform 2s ease-out';
+            ball.style.transform = `rotate(-${rotation}deg) translateX(120px) rotate(${rotation}deg)`;
+
+            // Вращаем рулетку в ту же сторону
+            const rotations = Math.floor(Math.random() * 3) + 3; // Случайное количество вращений (от 3 до 5)
+            const finalRotation = rotations * 360 + rotation; // Итоговый угол вращения
+
+            wheel.style.transition = 'transform 4s ease-out';
+            wheel.style.transform = `rotate(${finalRotation}deg)`;
+        }
+    </script>
+</body>
+</html>
