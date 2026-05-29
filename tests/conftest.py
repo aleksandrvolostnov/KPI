@@ -27,13 +27,7 @@ if hasattr(_db, '_engine'):
 if hasattr(_db, '_engines'):
     _db._engines.clear()
 
-# Принудительно инициализируем новые таблицы
-with flask_app.app_context():
-    _db.create_all()
-    from app import Role
-    if Role.query.count() == 0:
-        _db.session.add_all([Role(role_name='Admin'), Role(role_name='User')])
-        _db.session.commit()
+# НЕТ глобального создания таблиц! Всё перенесено в фикстуру db.
 
 @pytest.fixture(scope='session')
 def app():

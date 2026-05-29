@@ -1264,12 +1264,13 @@ def init_kanban_columns():
             db.session.add(KanbanColumn(name=col['name'], wip_limit=col['wip_limit'], order=col['order'], project_id=None))
     db.session.commit()
 
-# ------------------ АВТОМАТИЧЕСКОЕ СОЗДАНИЕ ТАБЛИЦ ------------------
-# Выполняется при ЛЮБОМ запуске приложения (gunicorn, тесты, python app.py)
-with app.app_context():
-    db.create_all()
-    init_kanban_columns()
+def init_database():
+    """Создаёт таблицы и инициализирует колонки канбана. Вызывать при старте приложения."""
+    with app.app_context():
+        db.create_all()
+        init_kanban_columns()
 
 # ------------------ ЗАПУСК ЛОКАЛЬНОГО СЕРВЕРА ------------------
 if __name__ == '__main__':
+    init_database()
     app.run(debug=True)
