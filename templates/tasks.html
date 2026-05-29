@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Список задач</title>
 
-    <!-- Подключаем Choices.js -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
@@ -33,7 +32,7 @@
             margin-bottom: 20px;
             font-size: 32px;
             text-align: center;
-            font-family: 'Century Gothic', sans-serif; /* Применяем шрифт Century Gothic */
+            font-family: 'Century Gothic', sans-serif;
             font-weight: normal;
         }
 
@@ -49,7 +48,6 @@
             font-weight: normal;
         }
 
-        /* Стили для элементов input и select */
         .filter-form input[type="text"],
         .filter-form input[type="date"],
         .choices__inner {
@@ -86,7 +84,6 @@
             color: var(--text-color);
         }
 
-
         .tasks-table {
             width: 100%;
             border-collapse: collapse;
@@ -102,7 +99,7 @@
 
         th, td {
             padding: 12px;
-            border: 1px solid color: var(--text-color);;
+            border: 1px solid var(--text-color);
             text-align: center;
             font-size: 16px;
         }
@@ -126,27 +123,24 @@
             color: #d3d3d3;
         }
 
-
         .choices__list .choices__item:hover {
-        background-color: var(--secondary-bg) !important;
-        color: var(--accent-color) !important;
-        border: none !important;
-    }
-            .choices__list .choices__item {
-        background-color: var(--secondary-bg) !important;
-        color: var(--text-color) !important;
-        border: none !important;
-    }
+            background-color: var(--secondary-bg) !important;
+            color: var(--accent-color) !important;
+            border: none !important;
+        }
+        .choices__list .choices__item {
+            background-color: var(--secondary-bg) !important;
+            color: var(--text-color) !important;
+            border: none !important;
+        }
 
-
-        /* Кликабельные строки */
         .clickable-row {
             cursor: pointer;
         }
     </style>
     {% extends 'base.html' %}
-    {% block title %}Дашборд{% endblock %}
-{% block content %}
+    {% block title %}Список задач{% endblock %}
+    {% block content %}
 </head>
 <body>
     <div class="container">
@@ -160,8 +154,8 @@
                     <option value="">Выберите сотрудника</option>
                     {% for user in users %}
                     <option value="{{ user.id }}" {% if request.form.get('assigned_to') == user.id %}selected{% endif %}>
-                    {{ user.username }}
-                     </option>
+                        {{ user.username }}
+                    </option>
                     {% endfor %}
                 </select>
 
@@ -174,11 +168,12 @@
                     <option value="Высокий" {% if request.form.get('priority') == 'Высокий' %}selected{% endif %}>Высокий приоритет (критический)</option>
                 </select>
 
+                <!-- Динамический список статусов из канбан-колонок -->
                 <select name="status" id="status">
                     <option value="">Выберите статус</option>
-                    <option value="In Progress" {% if request.form.get('status') == 'In Progress' %}selected{% endif %}>В процессе</option>
-                    <option value="Completed" {% if request.form.get('status') == 'Completed' %}selected{% endif %}>Завершена</option>
-                    <option value="Просрочено" {% if request.form.get('status') == 'Просрочено' %}selected{% endif %}>Просрочено</option>
+                    {% for status_name in all_statuses %}
+                        <option value="{{ status_name }}" {% if request.form.get('status') == status_name %}selected{% endif %}>{{ status_name }}</option>
+                    {% endfor %}
                 </select>
 
                 <select name="difficulty" id="difficulty">
@@ -220,18 +215,18 @@
         </table>
     </div>
 {% endblock %}
-    {% block extra_js %}
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const elements = document.querySelectorAll('select');
-            elements.forEach(function (element) {
-                new Choices(element, {
-                    searchEnabled: false,
-                    itemSelectText: '',
-                });
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const elements = document.querySelectorAll('select');
+        elements.forEach(function (element) {
+            new Choices(element, {
+                searchEnabled: false,
+                itemSelectText: '',
             });
         });
-    </script>
+    });
+</script>
 {% endblock %}
 </body>
 </html>

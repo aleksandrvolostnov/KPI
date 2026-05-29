@@ -65,17 +65,30 @@
             background-color: var(--secondary-bg);
             color: var(--text-color);
         }
-        .choices__list .choices__item:hover {
-        background-color: var(--secondary-bg) !important;
-        color: var(--accent-color) !important;
-        border: none !important;
 
-    }
-            .choices__list .choices__item {
-        background-color: var(--secondary-bg) !important;
-        color: var(--text-color) !important;
-        border: none !important;
-    }
+        /* Специально для поля даты — убираем белый фон */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1); /* если нужно инвертировать иконку календаря */
+            cursor: pointer;
+        }
+
+        /* Для flatpickr поле должно быть таким же, как и другие */
+        .flatpickr-input {
+            background-color: var(--secondary-bg) !important;
+            color: var(--text-color) !important;
+            border: 2px solid var(--text-color) !important;
+        }
+
+        .choices__list .choices__item:hover {
+            background-color: var(--secondary-bg) !important;
+            color: var(--accent-color) !important;
+            border: none !important;
+        }
+        .choices__list .choices__item {
+            background-color: var(--secondary-bg) !important;
+            color: var(--text-color) !important;
+            border: none !important;
+        }
 
         .button {
             background-color: var(--text-color);
@@ -144,59 +157,43 @@
             text-align: center;
         }
 
-
-        /* Стили для контейнера с датой */
-        .datetime-container {
-            width: 100%; /* Устанавливаем ширину 100% для контейнера */
-        }
-
-        /* Стили для кастомного календаря flatpickr */
-        #datetime-local {
-            padding: 12px;
-            border: 2px solid #3C3C3C;
-            border-radius: 10px;
-            font-family: 'Century Gothic', sans-serif;
-            font-size: 16px;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-            box-sizing: border-box;
-            background-color: rgba(255, 255, 255, 0.9);
-            color: black;
-            width: 300%; /* Устанавливаем ширину 100% для поля с датой */
-        }
-
+        /* Стили для календаря flatpickr в тёмной теме */
         .flatpickr-calendar {
+            background-color: var(--secondary-bg);
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--text-color);
         }
-
-        .flatpickr-month {
-            background-color: #F9D8B1;
-            color: black;
-            border-radius: 8px;
+        .flatpickr-months .flatpickr-month,
+        .flatpickr-current-month,
+        .flatpickr-monthDropdown-months,
+        .numInputWrapper,
+        .flatpickr-weekdays {
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
         }
-
+        .flatpickr-day {
+            color: var(--text-color);
+        }
         .flatpickr-day:hover {
-            background-color: #3C3C3C;
-            color: white;
+            background-color: var(--primary-bg);
+            color: var(--text-color);
         }
-
         .flatpickr-day.selected {
-            background-color: #3C3C3C;
-            color: white;
+            background-color: #6ABFB1;
+            color: var(--primary-bg);
         }
-
-        /* Стили для плейсхолдера */
-        datetime-local::placeholder {
-            color: #A0A0A0;
-            font-family: 'Century Gothic';
+        .flatpickr-day.today {
+            border-color: var(--text-color);
         }
-
-
+        .flatpickr-prev-month svg,
+        .flatpickr-next-month svg {
+            fill: var(--text-color);
+        }
     </style>
     {% extends 'base.html' %}
-    {% block title %}Дашборд{% endblock %}
-{% block content %}
+    {% block title %}Создание задачи{% endblock %}
+    {% block content %}
 </head>
 <body>
     <div class="container">
@@ -220,9 +217,8 @@
                     <option value="Высокий">Высокий приоритет (критический)</option>
                 </select>
 
-                <!-- Используем flatpickr для выбора даты -->
                 <div class="datetime-container">
-                    <input type="text" name="due_date" id="due_date" placeholder="Выберите дату и время" required>
+                    <input type="text" name="due_date" id="due_date" placeholder="Выберите дату" required>
                 </div>
 
                 <select name="difficulty" id="difficulty" required>
@@ -233,8 +229,10 @@
                 </select>
 
                 <select name="status" id="status" required>
-                    <option value="In Progress">В процессе</option>
-                    <option value="Completed">Выполнено</option>
+                    <option value="">Выберите статус</option>
+                    {% for value, label in status_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
                 </select>
 
                 <select name="assigned_to" id="assigned_to" required>
@@ -244,7 +242,6 @@
                     {% endfor %}
                 </select>
 
-                <!-- Поле для комментариев -->
                 <textarea name="comments" placeholder="Комментарии к задаче" rows="4"></textarea>
 
                 <label class="file-upload-button" for="file-upload">Добавить файлы</label>
@@ -254,11 +251,9 @@
 
                 <button type="submit" class="button">Создать задачу</button>
             </form>
-
-
         </div>
     </div>
-{% endblock %}
+    {% endblock %}
     {% block extra_js %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -270,11 +265,11 @@
                 });
             });
 
-            // Инициализация flatpickr
             flatpickr("#due_date", {
-                dateFormat: "Y-m-d",  // Формат даты
-                minDate: "today",     // Ограничение на минимальную дату (сегодня)
-                enableTime: false,    // Без времени
+                dateFormat: "Y-m-d",
+                minDate: "today",
+                locale: "ru",
+                // Дополнительная тема для тёмного фона
                 theme: "dark",
             });
         });
@@ -283,7 +278,6 @@
             const input = document.getElementById('file-upload');
             const fileList = document.getElementById('file-list');
             fileList.innerHTML = '';
-
             for (let i = 0; i < input.files.length; i++) {
                 const file = input.files[i];
                 const listItem = document.createElement('li');
@@ -292,6 +286,6 @@
             }
         }
     </script>
-{% endblock %}
+    {% endblock %}
 </body>
 </html>

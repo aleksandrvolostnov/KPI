@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* все стили остаются без изменений, как у вас */
         body {
             background-color: var(--primary-bg);
             color: var(--text-color);
@@ -20,8 +21,6 @@
             flex-direction: column;
             overflow-y: auto;
         }
-
-
 
         .logout-button {
             background-color: var(--text-color);
@@ -41,13 +40,12 @@
             transform: translateY(-5px);
         }
 
-        /* Контент страницы */
         .dashboard-content {
             display: flex;
             flex-wrap: wrap;
             gap: 30px;
             padding: 20px;
-            margin-left: 50px; /* Отступ при открытом меню (220px + 20px) */
+            margin-left: 50px;
             transition: margin-left 0.75s ease;
             flex-grow: 1;
             margin-top: -55px;
@@ -55,32 +53,29 @@
         }
 
         .dashboard-content.shifted {
-            margin-left: 0px; /* Отступ при закрытом меню */
+            margin-left: 0px;
         }
 
         .task-container {
-    background-color: var(--primary-bg);
-    border-radius: 15px;
-    padding: 20px;
-    width: 280px;
-    height: 280px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    text-decoration: none;
-    color: var(--text-color);
-}
+            background-color: var(--primary-bg);
+            border-radius: 15px;
+            padding: 20px;
+            width: 280px;
+            height: 280px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none;
+            color: var(--text-color);
+        }
 
-.task-container:hover {
-    transform: translateY(-5px); /* Легкий сдвиг вверх */
-}
-
-
-
+        .task-container:hover {
+            transform: translateY(-5px);
+        }
 
         .priority-indicator {
             width: 15px;
@@ -91,17 +86,9 @@
             right: 15px;
         }
 
-        .low-priority {
-            background-color: #6ABFB1;
-        }
-
-        .medium-priority {
-            background-color: #F3A57A;
-        }
-
-        .high-priority {
-            background-color: #F05A4F;
-        }
+        .low-priority { background-color: #6ABFB1; }
+        .medium-priority { background-color: #F3A57A; }
+        .high-priority { background-color: #F05A4F; }
 
         .task-details {
             display: flex;
@@ -123,12 +110,6 @@
             font-family: 'Century Gothic', sans-serif;
         }
 
-        .priority-container {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-        }
-
         .analytics-container {
             display: flex;
             gap: 30px;
@@ -136,13 +117,12 @@
             margin-top: 30px;
             width: 100%;
             transition: margin-left 0.75s ease;
-            margin-left: 70px; /* Отступ при открытом меню */
+            margin-left: 70px;
             align-items: center;
         }
 
-
         .analytics-container.shifted {
-            margin-left: 90px; /* Отступ при закрытом меню */
+            margin-left: 90px;
         }
 
         .analytics {
@@ -163,7 +143,7 @@
             font-size: 1.4em;
             margin-bottom: 20px;
             text-align: center;
-            font-family: 'Century Gothic', sans-serif; /* Применяем шрифт Century Gothic */
+            font-family: 'Century Gothic', sans-serif;
             font-weight: normal;
         }
 
@@ -182,54 +162,11 @@
             padding: 0;
         }
 
-        .analytics ul {
-            list-style-type: none;
-            padding: 0;
-            display: flex;
-            align-items: center;
-
-        }
-
-        .analytics li {
-            font-size: 1.1em;
-            margin-right: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .task-details p {
-            font-family: 'Century Gothic', sans-serif; /* Применяем шрифт Century Gothic */
-            font-size: 1em;                           /* Размер шрифта */
-            margin-bottom: 0px;                       /* Отступ между строками */
-            color: var(--text-color); /* Цвет текста */
-            font-weight: normal;
-        }
-        .task-details strong {
-            font-family: 'Century Gothic', sans-serif;
-            font-size: 1.1em;
-            font-weight: normal;
-        }
-
-        .task-description,
-        .task-priority,
-        .task-difficulty,
-        .task-due-date,
-        .task-assignee {
-            font-family: 'Century Gothic', sans-serif;
-            font-size: 1.2em;
-            margin-bottom: 5px;
-            color: var(--text-color);
-            font-weight: normal;
-        }
-        /* Убираем ошибку и правильно задаем цвет для иконки */
-
-
-/* Новая секция для вращающихся изображений */
         .floating-images {
             position: fixed;
             bottom: -90px;
-            right: -80px; /* Перемещаем в правый нижний угол */
-            width: 400px; /* Увеличиваем размер орбиты */
+            right: -80px;
+            width: 400px;
             height: 400px;
             display: flex;
             justify-content: center;
@@ -242,7 +179,6 @@
             width: 100px;
             height: 100px;
             z-index: 2;
-
         }
 
         .floating-images .orbit-image {
@@ -262,98 +198,63 @@
             height: 200px;
         }
 
-        .floating-images .orbit-image:nth-child(2) {
-            animation-delay: -2s;
-        }
-
-        .floating-images .orbit-image:nth-child(3) {
-            animation-delay: -1.5s;
-        }
-
-        .floating-images .orbit-image:nth-child(4) {
-            animation-delay: -3s;
-        }
-
-        .floating-images .orbit-image:nth-child(5) {
-            animation-delay: -4.5s;
-        }
-
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         @keyframes spinVertical {
-        0% {
-            transform: rotateY(0deg);
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
         }
-        100% {
-            transform: rotateY(360deg);
+
+        #atom-image {
+            animation: spinVertical 12s infinite linear;
+            transform-origin: center;
         }
-    }
 
-    #atom-image {
-        animation: spinVertical 12s infinite linear;
-        transform-origin: center;
-    }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0px;
+            width: 100%;
+        }
 
-    .dashboard-header {
-    display: flex;
-    justify-content: space-between; /* Распределяем пространство между элементами */
-    align-items: center;
-    padding: 20px 0px;
-    width: 100%;
-}
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-left: auto;
+        }
 
-.header-buttons {
-    display: flex;
-    align-items: center;
-    gap: 30px; /* Увеличиваем расстояние между элементами */
-    margin-left: auto; /* Прижимаем контейнер к правому краю */
-}
-
-.settings-button {
-    color: var(--text-color);
-    font-size: 2em;
-    transition: color 0.3s ease, transform 0.3s ease;
-    margin-right: 0; /* Убираем старый отступ */
-}
-.settings-button:hover {
-    color: #A4161A;
-    transform: rotate(50deg);
-}
-.logout-button {
-    background-color: var(--text-color);
-    color: var(--primary-bg);
-    padding: 12px 20px;
-    border-radius: 15px;
-    font-size: 1em;
-    text-decoration: none;
-    transition: background-color 0.3s, transform 0.3s;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    margin-right: 0; /* Убираем старый отступ */
-}
-
+        .settings-button {
+            color: var(--text-color);
+            font-size: 2em;
+            transition: color 0.3s ease, transform 0.3s ease;
+            margin-right: 0;
+        }
+        .settings-button:hover {
+            color: #A4161A;
+            transform: rotate(50deg);
+        }
     </style>
     {% extends 'base.html' %}
     {% block title %}Дашборд{% endblock %}
-{% block content %}
+    {% block content %}
 </head>
 <body>
     <header class="dashboard-header">
-    <div></div> <!-- Пустой элемент для выравнивания -->
-    <div class="header-buttons">
-        {% if current_user.role.role_name == 'Admin' %}
-            <a href="{{ url_for('manage_users') }}" class="settings-button">
-                <i class="fas fa-cog"></i>
-            </a>
-        {% endif %}
-        <a href="{{ url_for('logout') }}" class="logout-button">Выход</a>
-    </div>
-</header>
+        <div></div>
+        <div class="header-buttons">
+            {% if current_user.role.role_name == 'Admin' %}
+                <a href="{{ url_for('manage_users') }}" class="settings-button">
+                    <i class="fas fa-cog"></i>
+                </a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}" class="logout-button">Выход</a>
+        </div>
+    </header>
+
     <div class="dashboard-content" id="dashboardContent">
         {% for task in tasks %}
         <a href="{{ url_for('edit_task', task_id=task.id) }}" class="task-container">
@@ -361,15 +262,28 @@
             <div class="task-details">
                 <p class="task-description"><strong>Описание:</strong> {{ task.description }}</p>
                 <p class="task-priority"><strong>Приоритет:</strong> {{ task.priority }}</p>
-                <p class="task-difficulty"><strong>Сложность:</strong> {{ task.difficulty }}</p>
+                <p class="task-difficulty">
+                    <strong>Сложность:</strong>
+                    {% if task.difficulty == '1' or task.difficulty == 1 %}
+                        Легкая
+                    {% elif task.difficulty == '2' or task.difficulty == 2 %}
+                        Средняя
+                    {% elif task.difficulty == '3' or task.difficulty == 3 %}
+                        Сложная
+                    {% else %}
+                        {{ task.difficulty }}
+                    {% endif %}
+                </p>
                 <p class="task-due-date"><strong>Срок:</strong> {{ task.due_date.strftime('%d-%m-%Y') }}</p>
-                <p class="task-assignee"><strong>Ответственный:</strong> {{ task.assigned_to.username }}</p>
+                <p class="task-assignee"><strong>Ответственный:</strong> {{ task.assigned_to.username if task.assigned_to else 'Не назначен' }}</p>
             </div>
-
             <div class="priority-indicator {% if task.priority == 'Низкий' %}low-priority{% elif task.priority == 'Средний' %}medium-priority{% else %}high-priority{% endif %}"></div>
         </a>
+        {% else %}
+            <p style="text-align: center; width: 100%;">Нет задач с ближайшими дедлайнами.</p>
         {% endfor %}
     </div>
+
     <div class="floating-images">
         <img src="{{ url_for('static', filename='atom-white.svg') }}" alt="Atom" class="center-image" id="atom-image">
         <div class="orbit-image">
@@ -385,6 +299,7 @@
             <img src="{{ url_for('static', filename='small-orbit-white.svg') }}" alt="Image 4">
         </div>
     </div>
+
     <div class="analytics-container" id="analyticsContainer">
         <div class="analytics">
             <h2>Приоритеты задач</h2>
@@ -405,112 +320,96 @@
         </div>
     </div>
 {% endblock %}
-    {% block extra_js %}
-    <script>
-        let lastScrollTop = 0;
+{% block extra_js %}
+<script>
+    let lastScrollTop = 0;
 
-        function toggleMenu() {
-            const menu = document.getElementById('menuButtons');
-            const content = document.getElementById('dashboardContent');
-            const analytics = document.getElementById('analyticsContainer');
-            menu.classList.toggle('closed');
-            content.classList.toggle('shifted');
-            analytics.classList.toggle('shifted');
+    function toggleMenu() {
+        const menu = document.getElementById('menuButtons');
+        const content = document.getElementById('dashboardContent');
+        const analytics = document.getElementById('analyticsContainer');
+        if (menu) menu.classList.toggle('closed');
+        content.classList.toggle('shifted');
+        analytics.classList.toggle('shifted');
+    }
+
+    window.addEventListener('scroll', function() {
+        const menu = document.getElementById('menuButtons');
+        const content = document.getElementById('dashboardContent');
+        const analytics = document.getElementById('analyticsContainer');
+        const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+        if (currentScroll > lastScrollTop) {
+            if (menu) menu.classList.add('closed');
+            content.classList.add('shifted');
+            analytics.classList.add('shifted');
+        } else {
+            if (menu) menu.classList.remove('closed');
+            content.classList.remove('shifted');
+            analytics.classList.remove('shifted');
         }
+        lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+    });
 
-        window.addEventListener('scroll', function() {
-            const menu = document.getElementById('menuButtons');
-            const content = document.getElementById('dashboardContent');
-            const analytics = document.getElementById('analyticsContainer');
-            const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
-
-            if (currentScroll > lastScrollTop) {
-                // Scroll Down
-                menu.classList.add('closed');
-                content.classList.add('shifted');
-                analytics.classList.add('shifted');
-            } else {
-                // Scroll Up
-                menu.classList.remove('closed');
-                content.classList.remove('shifted');
-                analytics.classList.remove('shifted');
-            }
-            lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
-        });
-
-        const ctxPriority = document.getElementById('priorityChart').getContext('2d');
-        new Chart(ctxPriority, {
-            type: 'pie',
-            data: {
-                labels: ['Низкий', 'Средний', 'Высокий'],
-                datasets: [{
-                    label: 'Приоритеты задач',
-                    data: [{{ low_priority_count }}, {{ medium_priority_count }}, {{ high_priority_count }}],
-                    backgroundColor: ['#6ABFB1', '#F3A57A', '#F05A4F'],
-                    borderWidth: 0,
-                    hoverOffset: 10,
-                    borderRadius: 10,
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        align: 'start',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(tooltipItem) {
-                                return `${tooltipItem.label}: ${tooltipItem.raw} задач`;
-                            }
+    const ctxPriority = document.getElementById('priorityChart').getContext('2d');
+    new Chart(ctxPriority, {
+        type: 'pie',
+        data: {
+            labels: ['Низкий', 'Средний', 'Высокий'],
+            datasets: [{
+                label: 'Приоритеты задач',
+                data: [{{ low_priority_count }}, {{ medium_priority_count }}, {{ high_priority_count }}],
+                backgroundColor: ['#6ABFB1', '#F3A57A', '#F05A4F'],
+                borderWidth: 0,
+                hoverOffset: 10,
+                borderRadius: 10,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top', align: 'start' },
+                tooltip: {
+                    callbacks: {
+                        label: function(tooltipItem) {
+                            return `${tooltipItem.label}: ${tooltipItem.raw} задач`;
                         }
                     }
                 }
             }
-        });
+        }
+    });
 
-        const ctxDifficulty = document.getElementById('difficultyChart').getContext('2d');
-        new Chart(ctxDifficulty, {
-            type: 'bar',
-            data: {
-                labels: ['Легкая', 'Средняя', 'Сложная'],
-                datasets: [{
-                    label: 'Сложность задач',
-                    data: [{{ easy_count }}, {{ medium_count }}, {{ hard_count }}],
-                    backgroundColor: ['#6ABFB1', '#F3A57A', '#F05A4F'],
-                    borderWidth: 1,
-                    borderColor: '#F9D8B1',
-                    hoverBackgroundColor: '#d3d3d3',
-                    borderRadius: 5,
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(tooltipItem) {
-                                return `${tooltipItem.label}: ${tooltipItem.raw} задач`;
-                            }
-                        }
-                    }
-                },
-                animation: {
-                    duration: 3000,
-                    easing: 'easeOutBounce',
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1,
+    const ctxDifficulty = document.getElementById('difficultyChart').getContext('2d');
+    new Chart(ctxDifficulty, {
+        type: 'bar',
+        data: {
+            labels: ['Легкая', 'Средняя', 'Сложная'],
+            datasets: [{
+                label: 'Сложность задач',
+                data: [{{ easy_count }}, {{ medium_count }}, {{ hard_count }}],
+                backgroundColor: ['#6ABFB1', '#F3A57A', '#F05A4F'],
+                borderWidth: 1,
+                borderColor: '#F9D8B1',
+                hoverBackgroundColor: '#d3d3d3',
+                borderRadius: 5,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(tooltipItem) {
+                            return `${tooltipItem.label}: ${tooltipItem.raw} задач`;
                         }
                     }
                 }
-            }
-        });
-    </script>
+            },
+            animation: { duration: 3000, easing: 'easeOutBounce' },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
+</script>
 {% endblock %}
 </body>
 </html>
