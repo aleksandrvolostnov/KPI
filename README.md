@@ -1,4 +1,4 @@
-# ⚡ Efficiency Control – Система управления эффективностью
+# ⚛ AtomFlow – Система управления эффективностью
 
 [![CI](https://github.com/aleksandrvolostnov/KPI/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/aleksandrvolostnov/KPI/actions/workflows/ci-cd.yml)
 [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/)
@@ -66,7 +66,7 @@ docker build -t efficiency-control .
 docker run -p 5000:5000 --env DATABASE_URL=postgresql://user:pass@host/db efficiency-control
 ```
 
-## 🗄️ Схема базы данных (SQL)
+## Схема базы данных (SQL)
 
 Выполните этот скрипт в вашей PostgreSQL:
 
@@ -230,7 +230,7 @@ INSERT INTO kanban_columns (name, wip_limit, "order", project_id) VALUES
 ('Done', 0, 3, NULL);
 ```
 
-## 🔄 CI/CD пайплайн
+## CI/CD пайплайн
 
 GitHub Actions автоматически запускает тесты при пуше в `main`.  
 
