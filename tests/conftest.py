@@ -10,11 +10,11 @@ if TEST_DATABASE_URL:
 else:
     os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
 
-# --- 2. Теперь импортируем app (он прочитает DATABASE_URL) ---
+# --- 2. Импорт app ---
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app import app as flask_app, db as _db
 
-# --- 3. Дополнительные тестовые настройки ---
+# --- 3. Конфигурация тестов ---
 flask_app.config.update({
     'TESTING': True,
     'SQLALCHEMY_TRACK_MODIFICATIONS': False,
@@ -23,7 +23,7 @@ flask_app.config.update({
     'SECRET_KEY': 'test-secret',
 })
 
-# Удаляем старый движок, который мог создаться при импорте
+# Удаляем старый движок
 if hasattr(_db, '_engine'):
     del _db._engine
 if hasattr(_db, '_engines'):
@@ -65,8 +65,9 @@ def test_user(db):
 
 @pytest.fixture
 def login(client, test_user):
-    with client.session_transaction() as sess:
-        from flask_login import login_user
-        login_user(test_user)
-        sess['_user_id'] = str(test_user.id)
+    """Логинимся через реальный POST-запрос"""
+    client.post('/login', data={
+        'username': test_user.username,
+        'password': 'testpass'
+    })
     return test_user
