@@ -1,18 +1,20 @@
 import sys
 import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 import tempfile
 import pytest
-from app import app as flask_app, db as _db
 
-# ---- Поддержка внешней БД через переменную окружения ----
+# --- 1. Устанавливаем DATABASE_URL до импорта app ---
 TEST_DATABASE_URL = os.environ.get('TEST_DATABASE_URL')
 if TEST_DATABASE_URL:
-    flask_app.config['SQLALCHEMY_DATABASE_URI'] = TEST_DATABASE_URL
+    os.environ['DATABASE_URL'] = TEST_DATABASE_URL
 else:
-    flask_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
 
+# --- 2. Теперь импортируем app (он прочитает DATABASE_URL) ---
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from app import app as flask_app, db as _db
+
+# --- 3. Дополнительные тестовые настройки ---
 flask_app.config.update({
     'TESTING': True,
     'SQLALCHEMY_TRACK_MODIFICATIONS': False,
@@ -21,14 +23,13 @@ flask_app.config.update({
     'SECRET_KEY': 'test-secret',
 })
 
-# Удаляем существующий движок (если создан)
+# Удаляем старый движок, который мог создаться при импорте
 if hasattr(_db, '_engine'):
     del _db._engine
 if hasattr(_db, '_engines'):
     _db._engines.clear()
 
-# НЕТ глобального создания таблиц! Всё перенесено в фикстуру db.
-
+# --- Фикстуры ---
 @pytest.fixture(scope='session')
 def app():
     yield flask_app
