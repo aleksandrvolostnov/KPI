@@ -233,5 +233,4 @@ INSERT INTO kanban_columns (name, wip_limit, "order", project_id) VALUES
 ## 🔄 CI/CD пайплайн
 
 GitHub Actions автоматически запускает тесты при пуше в `main`.  
-Статус: [https://github.com/aleksandrvolostnov/KPI/actions/workflows/ci-cd.yml/badge.svg?branch=main](https://github.com/aleksandrvolostnov/KPI/actions/workflows/ci-cd.yml?branch=main)
-```
+
