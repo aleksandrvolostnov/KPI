@@ -5,7 +5,7 @@
 [![Flask](https://img.shields.io/badge/Flask-2.3-black)](https://flask.palletsprojects.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
 
-**Efficiency Control** – веб‑сервис для управления задачами, проектами, командной работой и аналитикой (канбан, Гант, чат, KPI).
+**Efficiency Control** – веб‑сервис для управления задачами, проектами, командной работой и аналитикой (канбан, Гант, чат, KPI)
 
 ## Возможности
 
