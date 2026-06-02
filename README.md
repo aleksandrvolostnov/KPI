@@ -22,7 +22,7 @@
 ## Технологии
 
 - Flask, Flask‑SQLAlchemy, Flask‑Login
-- PostgreSQL / SQLite
+- PostgreSQL
 - openpyxl, pytest, GitHub Actions
 
 ## Быстрый старт
