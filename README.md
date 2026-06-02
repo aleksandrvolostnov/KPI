@@ -228,6 +228,8 @@ INSERT INTO kanban_columns (name, wip_limit, "order", project_id) VALUES
 ('In Progress', 3, 1, NULL),
 ('Review', 2, 2, NULL),
 ('Done', 0, 3, NULL);
+
+ALTER TABLE tasks ALTER COLUMN project_id DROP NOT NULL;
 ```
 
 ## CI/CD пайплайн
