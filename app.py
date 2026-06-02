@@ -142,7 +142,7 @@ class Task(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     assigned_to_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=True)
     parent_task_id = db.Column(db.Integer, db.ForeignKey("tasks.id"))
     parent_task = db.relationship("Task", remote_side=[id], backref="dependent_tasks")
     user = db.relationship("User", foreign_keys=[user_id], backref="tasks_created")
