@@ -45,14 +45,14 @@
         .menu-header {
     display: flex;
     align-items: center;
-    padding: 20px 20px;
+    padding: 20px 10px;
     height: 30px;
     border-bottom: 3px solid var(--accent-color); /* Толщина и цвет полоски */
     margin-bottom: 10px; /* Отступ снизу для визуального разделения */
 }
 
         .logo {
-            font-size: 28px;
+            font-size: 22px;
             color: var(--text-color);
             white-space: nowrap;
             font-family: 'Century Gothic', sans-serif;
@@ -290,7 +290,7 @@
     <!-- Боковое меню -->
     <div class="menu-container">
         <div class="menu-header">
-            <div class="logo">KM<span>ㅤSOFT</span></div>
+            <div class="logo">ATOM<span> FLOW</span></div>
         </div>
 
         <div class="menu-items">
@@ -348,11 +348,14 @@
                 <span>OnlyOffice</span>
             </a> -->
 
-            <a href="{{ url_for('gantt') }}" class="menu-item">
+            <a href="{{ url_for('process_mining') }}" class="menu-item">
                 <i class="fas fa-project-diagram"></i>
-                <span>Диаграмма Ганта</span>
+                <span>Майнинг</span>
             </a>
-
+            <a href="{{ url_for('weights_settings') }}" class="menu-item">
+                <i class="fas fa-balance-scale"></i>
+                <span>Веса критериев</span>
+            </a>
             <!-- Кнопка смены темы внутри меню -->
 
         </div>

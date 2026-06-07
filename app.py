@@ -5,6 +5,14 @@ from calendar import month_name, monthcalendar
 from datetime import datetime, timedelta
 from functools import wraps
 from hashlib import md5
+from collections import defaultdict, Counter
+
+import matplotlib
+
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import networkx as nx
+import tempfile
 
 from flask import Flask, flash, jsonify, redirect, render_template, request, send_file, send_from_directory, url_for
 from flask_login import LoginManager, UserMixin, current_user, login_required, login_user, logout_user
@@ -217,6 +225,19 @@ class File(db.Model):
     task_id = db.Column(db.Integer, db.ForeignKey("tasks.id"))
 
 
+# ---------- НОВАЯ МОДЕЛЬ ДЛЯ ВЕСОВ КРИТЕРИЕВ ----------
+class UserWeight(db.Model):
+    __tablename__ = 'user_weights'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=False)
+    weight_priority = db.Column(db.Float, default=0.5)  # вес приоритета
+    weight_difficulty = db.Column(db.Float, default=0.3)  # вес сложности
+    weight_time = db.Column(db.Float, default=0.2)  # вес времени в статусе
+    ahp_matrix = db.Column(db.JSON, nullable=True)  # сохранённая матрица сравнений
+
+    user = db.relationship('User', backref='weights')
+
+
 # ------------------ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ------------------
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -233,7 +254,362 @@ def format_difficulty(value):
     return str(value)
 
 
-# ------------------ МАРШРУТЫ ------------------
+# ================= [PROCESS MINING] ОСНОВНЫЕ ФУНКЦИИ =================
+def get_task_event_log(user_id=None, project_id=None):
+    """Извлекает логи событий из статус-истории задач."""
+    query = Task.query
+    if user_id:
+        query = query.filter((Task.user_id == user_id) | (Task.assigned_to_id == user_id))
+    if project_id:
+        query = query.filter_by(project_id=project_id)
+
+    tasks = query.all()
+    events = []
+    for task in tasks:
+        history = task.status_history or []
+        events.append({
+            'task_id': task.id,
+            'title': task.title,
+            'timestamp': task.created_at.isoformat(),
+            'from_status': None,
+            'to_status': task.status,
+            'user': task.assigned_to.username if task.assigned_to else None
+        })
+        last_status = task.status
+        for step in history:
+            new_status = step['status']
+            events.append({
+                'task_id': task.id,
+                'title': task.title,
+                'timestamp': step['timestamp'],
+                'from_status': last_status,
+                'to_status': new_status,
+                'user': task.assigned_to.username if task.assigned_to else None
+            })
+            last_status = new_status
+
+    events.sort(key=lambda x: x['timestamp'])
+    return events
+
+
+def compute_process_metrics(events):
+    """Вычисляет основные метрики: среднее время в статусах, матрицу переходов."""
+    status_durations = defaultdict(list)
+    transition_counts = Counter()
+    tasks_events = defaultdict(list)
+
+    for ev in events:
+        tasks_events[ev['task_id']].append(ev)
+
+    for task_id, ev_list in tasks_events.items():
+        for i in range(len(ev_list) - 1):
+            current = ev_list[i]
+            nxt = ev_list[i + 1]
+            transition_counts[(current['to_status'], nxt['to_status'])] += 1
+            if current['timestamp'] and nxt['timestamp']:
+                start = datetime.fromisoformat(current['timestamp'])
+                end = datetime.fromisoformat(nxt['timestamp'])
+                duration_hours = (end - start).total_seconds() / 3600
+                status_durations[current['to_status']].append(duration_hours)
+
+    avg_duration = {}
+    for status, durations in status_durations.items():
+        avg_duration[status] = round(sum(durations) / len(durations), 2) if durations else 0
+
+    transitions = [{'from': f, 'to': t, 'count': c} for (f, t), c in transition_counts.items() if f != t]
+
+    return {
+        'avg_duration_per_status': avg_duration,
+        'transitions': transitions,
+        'total_tasks': len(tasks_events),
+        'total_events': len(events)
+    }
+
+
+def generate_transition_graph(transitions):
+    """Строит граф переходов с помощью networkx, возвращает путь к временному PNG."""
+    if not transitions:
+        return None
+    G = nx.DiGraph()
+    for t in transitions:
+        from_node = t['from'] if t['from'] else 'Создание'
+        to_node = t['to']
+        G.add_edge(from_node, to_node, weight=t['count'])
+    if G.number_of_edges() == 0:
+        return None
+
+    plt.figure(figsize=(12, 8), facecolor='#1e1e2a')
+    pos = nx.spring_layout(G, k=2, seed=42)
+    nx.draw_networkx_nodes(G, pos, node_size=3000, node_color='#4a4a5a', edgecolors='#6ABFB1', linewidths=2)
+    weights = [G[u][v]['weight'] for u, v in G.edges()]
+    max_weight = max(weights) if weights else 1
+    edge_widths = [1 + 5 * w / max_weight for w in weights]
+    nx.draw_networkx_edges(G, pos, width=edge_widths, edge_color='#88aaff', arrows=True, arrowsize=20, arrowstyle='->')
+    edge_labels = {(u, v): G[u][v]['weight'] for u, v in G.edges()}
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=10, font_color='white')
+    nx.draw_networkx_labels(G, pos, font_size=12, font_color='white', font_weight='bold')
+    plt.title('Граф переходов между статусами задач', fontsize=16, color='white')
+    plt.axis('off')
+    plt.tight_layout()
+
+    tmp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+    plt.savefig(tmp_file.name, format='png', facecolor='#1e1e2a', edgecolor='none')
+    plt.close()
+    return tmp_file.name
+
+
+def generate_recommendations(metrics, transitions, regress_count):
+    """Формирует управленческие рекомендации на основе метрик."""
+    recs = []
+    avg_duration = metrics['avg_duration_per_status']
+    total_tasks = metrics['total_tasks']
+
+    if avg_duration:
+        max_status = max(avg_duration.items(), key=lambda x: x[1])
+        max_hours = max_status[1]
+        avg_hours = sum(avg_duration.values()) / len(avg_duration) if avg_duration else 0
+        if max_hours > avg_hours * 2 and max_hours > 8:
+            recs.append({
+                'type': 'bottleneck',
+                'title': 'Узкое место в потоке',
+                'message': f'Статус «{max_status[0]}» занимает {max_hours:.1f} ч, что в {max_hours / avg_hours:.1f} раз больше среднего.',
+                'action': 'Проведите анализ причин задержек в этом статусе, рассмотрите WIP-лимиты или дополнительное обучение.'
+            })
+
+    if regress_count > 0 and total_tasks > 0:
+        regress_rate = regress_count / total_tasks
+        if regress_rate > 0.3:
+            recs.append({
+                'type': 'quality',
+                'title': 'Высокий процент возвратов',
+                'message': f'{regress_count} задач ({regress_rate * 100:.0f}%) вернулись из Review -> In Progress.',
+                'action': 'Введите чек-лист для ревью, назначьте ответственного за качество, проводите ретроспективы.'
+            })
+        elif regress_rate > 0.1:
+            recs.append({
+                'type': 'quality',
+                'title': 'Есть возвраты',
+                'message': f'{regress_count} задач потребовали доработки после ревью.',
+                'action': 'Уточните критерии приёмки задачи и проводите короткие встречи по результатам ревью.'
+            })
+
+    if 'In Progress' in avg_duration and avg_duration['In Progress'] > 24:
+        recs.append({
+            'type': 'long_cycle',
+            'title': 'Задачи застревают в работе',
+            'message': f'Среднее время в статусе In Progress: {avg_duration["In Progress"]:.1f} ч (> 1 дня).',
+            'action': 'Разбивайте задачи на более мелкие, используйте ежедневные стендапы для выявления блокеров.'
+        })
+    if 'Review' in avg_duration and avg_duration['Review'] > 12:
+        recs.append({
+            'type': 'review_slow',
+            'title': 'Медленное ревью',
+            'message': f'Ревью длится в среднем {avg_duration["Review"]:.1f} ч.',
+            'action': 'Установите тайм-лимит на ревью (2-4 часа), внедрите парное программирование или автоматические проверки.'
+        })
+
+    if total_tasks > 0 and len(transitions) == 0:
+        recs.append({
+            'type': 'no_flow',
+            'title': 'Процесс не движется',
+            'message': 'Нет переходов между статусами. Возможно, задачи никогда не меняют статус.',
+            'action': 'Настройте доску так, чтобы каждая задача обязательно проходила этапы. Проведите обучение команды работе с канбаном.'
+        })
+
+    if regress_count == 0 and total_tasks > 5 and len(avg_duration) >= 3:
+        recs.append({
+            'type': 'good',
+            'title': 'Отличный поток!',
+            'message': 'Нет возвратов на доработку, средние времена в норме.',
+            'action': 'Документируйте текущие практики и делитесь опытом с другими командами.'
+        })
+    return recs
+
+
+# ================= РАСШИРЕННЫЕ МЕТРИКИ =================
+def calculate_extended_metrics(events):
+    """Lead Time, Cycle Time, Throughput, статистика по исполнителям."""
+    tasks_data = defaultdict(lambda: {'created': None, 'completed': None, 'status_timeline': []})
+    for ev in events:
+        tid = ev['task_id']
+        if ev['from_status'] is None:
+            tasks_data[tid]['created'] = datetime.fromisoformat(ev['timestamp'])
+        tasks_data[tid]['status_timeline'].append(ev)
+
+    lead_times = []
+    cycle_times = []
+    completed_tasks = 0
+    performer_stats = defaultdict(lambda: {'total_time': 0, 'task_count': 0})
+
+    for tid, data in tasks_data.items():
+        if data['created'] is None:
+            continue
+        last_done = None
+        active_time = 0.0
+        for i, ev in enumerate(data['status_timeline']):
+            if ev['to_status'] == 'Done':
+                last_done = datetime.fromisoformat(ev['timestamp'])
+            if ev['to_status'] in ('In Progress', 'Review') and i + 1 < len(data['status_timeline']):
+                start = datetime.fromisoformat(ev['timestamp'])
+                end = datetime.fromisoformat(data['status_timeline'][i + 1]['timestamp'])
+                active_time += (end - start).total_seconds() / 3600
+        if last_done:
+            lead = (last_done - data['created']).total_seconds() / 3600
+            lead_times.append(lead)
+            cycle_times.append(active_time)
+            completed_tasks += 1
+            assignee = data['status_timeline'][-1].get('user')
+            if assignee:
+                performer_stats[assignee]['total_time'] += lead
+                performer_stats[assignee]['task_count'] += 1
+
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    throughput_count = sum(
+        1 for ev in events if ev['to_status'] == 'Done' and datetime.fromisoformat(ev['timestamp']) >= thirty_days_ago)
+    throughput = round(throughput_count / 30, 2) if completed_tasks else 0
+
+    return {
+        'avg_lead_time_hours': round(sum(lead_times) / len(lead_times), 2) if lead_times else 0,
+        'avg_cycle_time_hours': round(sum(cycle_times) / len(cycle_times), 2) if cycle_times else 0,
+        'throughput_per_day': throughput,
+        'completed_tasks': completed_tasks,
+        'performer_stats': [
+            {'name': name,
+             'avg_time_hours': round(stats['total_time'] / stats['task_count'], 2) if stats['task_count'] else 0,
+             'count': stats['task_count']}
+            for name, stats in performer_stats.items()
+        ]
+    }
+
+
+def get_timeline_events(events):
+    """Возвращает список событий для тепловой карты (дата, статус)."""
+    timeline = []
+    for ev in events:
+        dt = datetime.fromisoformat(ev['timestamp']).date()
+        timeline.append({'date': dt.isoformat(), 'status': ev['to_status']})
+    return timeline
+
+
+def get_sankey_data(transitions):
+    """Формирует данные для Sankey-диаграммы (узлы и связи)."""
+    nodes = set()
+    links = []
+    for t in transitions:
+        from_node = t['from'] if t['from'] else 'Создание'
+        to_node = t['to']
+        nodes.add(from_node)
+        nodes.add(to_node)
+        links.append({'source': from_node, 'target': to_node, 'value': t['count']})
+    nodes_list = list(nodes)
+    source_indices = [nodes_list.index(link['source']) for link in links]
+    target_indices = [nodes_list.index(link['target']) for link in links]
+    return {
+        'nodes': nodes_list,
+        'links': links,
+        'source_indices': source_indices,
+        'target_indices': target_indices,
+        'values': [l['value'] for l in links]
+    }
+
+
+# ================= НОРМАЛИЗАЦИЯ И ПОЛЕЗНОСТЬ (методы из учебника) =================
+def normalize_minimization(values):
+    """Min-max нормализация для критерия, который нужно минимизировать (чем меньше, тем лучше)."""
+    if not values:
+        return []
+    min_val = min(values)
+    max_val = max(values)
+    if max_val == min_val:
+        return [1.0] * len(values)
+    return [(max_val - v) / (max_val - min_val) for v in values]
+
+
+def normalize_maximization(values):
+    """Min-max нормализация для критерия, который нужно максимизировать."""
+    if not values:
+        return []
+    min_val = min(values)
+    max_val = max(values)
+    if max_val == min_val:
+        return [1.0] * len(values)
+    return [(v - min_val) / (max_val - min_val) for v in values]
+
+
+def get_numeric_priority(priority_str):
+    mapping = {'Низкий': 1, 'Средний': 2, 'Высокий': 3}
+    return mapping.get(priority_str, 2)
+
+
+def get_numeric_difficulty(difficulty_str):
+    if difficulty_str in ('1', 'Легко', 'Легкая'):
+        return 1
+    if difficulty_str in ('2', 'Средне', 'Средняя'):
+        return 2
+    if difficulty_str in ('3', 'Сложно', 'Сложная'):
+        return 3
+    return 2
+
+
+def get_user_weights(user_id):
+    """Возвращает объект UserWeight для пользователя, создаёт со значениями по умолчанию, если нет."""
+    weights = UserWeight.query.filter_by(user_id=user_id).first()
+    if not weights:
+        weights = UserWeight(user_id=user_id, weight_priority=0.5, weight_difficulty=0.3, weight_time=0.2)
+        db.session.add(weights)
+        db.session.commit()
+    return weights
+
+
+def compute_normalized_utilities(tasks, user_weights):
+    """Для списка задач возвращает список кортежей (task, utility, norm_priority, norm_difficulty, norm_time)."""
+    if not tasks:
+        return []
+    priorities = [get_numeric_priority(t.priority) for t in tasks]
+    difficulties = [get_numeric_difficulty(t.difficulty) for t in tasks]
+    times = []
+    for t in tasks:
+        if t.status in ('In Progress', 'Review') and t.started_at:
+            times.append((datetime.utcnow() - t.started_at).total_seconds() / 3600)
+        else:
+            times.append(0)
+
+    norm_priorities = normalize_maximization(priorities)
+    norm_difficulties = normalize_minimization(difficulties)
+    norm_times = normalize_maximization(times)
+
+    result = []
+    for i, task in enumerate(tasks):
+        utility = (user_weights.weight_priority * norm_priorities[i] +
+                   user_weights.weight_difficulty * norm_difficulties[i] +
+                   user_weights.weight_time * norm_times[i])
+        result.append((task, utility, norm_priorities[i], norm_difficulties[i], norm_times[i]))
+    return result
+
+
+def ahp_weights_from_matrix(matrix):
+    """
+    Реализация метода аналитической иерархии (Саати) для матрицы 3x3.
+    Возвращает (weights, consistency_ratio).
+    """
+    import numpy as np
+    n = len(matrix)
+    m = np.array(matrix, dtype=float)
+    # Суммируем по столбцам
+    col_sums = m.sum(axis=0)
+    # Нормируем матрицу
+    norm_matrix = m / col_sums
+    # Усредняем по строкам – это веса
+    weights = np.mean(norm_matrix, axis=1)
+    # Вычисление λ_max для проверки согласованности
+    lambda_max = np.mean(np.sum(m, axis=1) * weights) / np.sum(weights)
+    ci = (lambda_max - n) / (n - 1)
+    ri = {1: 0, 2: 0, 3: 0.58, 4: 0.9, 5: 1.12}.get(n, 1.24)
+    cr = ci / ri if ri != 0 else 0
+    return weights.tolist(), cr
+
+
+# ------------------ МАРШРУТЫ (ОСНОВНЫЕ) ------------------
 @app.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
@@ -284,7 +660,7 @@ def index():
     return render_template("welcome.html")
 
 
-# Чат
+# ------------------ ЧАТ ------------------
 def mark_messages_as_read(sender_id, receiver_id):
     unread_messages = Message.query.filter_by(receiver_id=receiver_id, sender_id=sender_id, is_read=False).all()
     for msg in unread_messages:
@@ -316,7 +692,8 @@ def chat(user_id):
             if last_message and last_message.content
             else (f"Файл: {last_message.filename}" if last_message else "Нет сообщений")
         )
-        has_new_message = Message.query.filter_by(sender_id=user.id, receiver_id=current_user.id, is_read=False).count() > 0
+        has_new_message = Message.query.filter_by(sender_id=user.id, receiver_id=current_user.id,
+                                                  is_read=False).count() > 0
         user_has_new_message[user.id] = has_new_message
     users_sorted = sorted(
         users,
@@ -679,7 +1056,8 @@ def calendar():
         month = 12
         year -= 1
     if current_user.role.role_name == "Admin":
-        tasks = Task.query.filter(db.extract("year", Task.due_date) == year, db.extract("month", Task.due_date) == month).all()
+        tasks = Task.query.filter(db.extract("year", Task.due_date) == year,
+                                  db.extract("month", Task.due_date) == month).all()
     else:
         tasks = Task.query.filter(
             (Task.user_id == current_user.id) | (Task.assigned_to_id == current_user.id),
@@ -740,53 +1118,65 @@ def check_deadlines():
                 flash(f'Задача "{task.title}" приближается к дедлайну!')
 
 
-# ------------------ КАНБАН-ДОСКА ------------------
+# ------------------ КАНБАН-ДОСКА (модифицированная с поддержкой сортировки по полезности) ------------------
 @app.route("/task_board")
 @login_required
 def task_board():
     mode = request.args.get("mode", "status")
     project_id = request.args.get("project_id", type=int)
+    sort_by = request.args.get("sort_by", "position")  # 'position' или 'utility'
+
     if project_id:
         project = Project.query.get_or_404(project_id)
-        if (
-            current_user not in project.members
-            and current_user.id != project.owner_id
-            and current_user.role.role_name != "Admin"
-        ):
+        if current_user not in project.members and current_user.id != project.owner_id and current_user.role.role_name != "Admin":
             flash("Нет доступа к проекту", "error")
             return redirect(url_for("projects"))
         tasks = Task.query.filter_by(project_id=project_id).all()
     else:
         tasks = Task.query.filter((Task.user_id == current_user.id) | (Task.assigned_to_id == current_user.id)).all()
+
+    # Если нужна сортировка по полезности
+    if sort_by == 'utility':
+        user_weights = get_user_weights(current_user.id)
+        ranked = compute_normalized_utilities(tasks, user_weights)
+        # Сортируем по убыванию полезности
+        ranked.sort(key=lambda x: x[1], reverse=True)
+        # Добавляем атрибут utility каждой задаче
+        for task, utility, _, _, _ in ranked:
+            task.utility = utility
+        tasks = [task for task, _, _, _, _ in ranked]
+    else:
+        for task in tasks:
+            task.utility = 0
+
+    # Логика построения колонок
     if mode == "status":
-        columns = (
-            KanbanColumn.query.filter((KanbanColumn.project_id == project_id) | (KanbanColumn.project_id.is_(None)))
-            .order_by(KanbanColumn.order)
-            .all()
-        )
+        columns = KanbanColumn.query.filter(
+            (KanbanColumn.project_id == project_id) | (KanbanColumn.project_id.is_(None))).order_by(
+            KanbanColumn.order).all()
         tasks_by_column = {col.name: [] for col in columns}
         for task in tasks:
             col_name = task.status if task.status in tasks_by_column else (columns[0].name if columns else "To Do")
             tasks_by_column[col_name].append(task)
         for col in tasks_by_column:
-            tasks_by_column[col].sort(key=lambda t: t.position)
+            if sort_by == 'utility':
+                tasks_by_column[col].sort(key=lambda t: getattr(t, 'utility', 0), reverse=True)
+            else:
+                tasks_by_column[col].sort(key=lambda t: t.position)
         column_counts = {col.name: len(tasks_by_column[col.name]) for col in columns}
     elif mode == "priority":
-        columns = [
-            {"name": "Низкий", "wip_limit": 0},
-            {"name": "Средний", "wip_limit": 0},
-            {"name": "Высокий", "wip_limit": 0},
-        ]
+        columns = [{"name": "Низкий", "wip_limit": 0}, {"name": "Средний", "wip_limit": 0},
+                   {"name": "Высокий", "wip_limit": 0}]
         tasks_by_column = {"Низкий": [], "Средний": [], "Высокий": []}
         for task in tasks:
             tasks_by_column[task.priority].append(task)
+        for col in tasks_by_column:
+            if sort_by == 'utility':
+                tasks_by_column[col].sort(key=lambda t: getattr(t, 'utility', 0), reverse=True)
         column_counts = {col["name"]: len(tasks_by_column[col["name"]]) for col in columns}
-    else:
-        columns = [
-            {"name": "Легкая", "wip_limit": 0},
-            {"name": "Средняя", "wip_limit": 0},
-            {"name": "Сложная", "wip_limit": 0},
-        ]
+    else:  # mode == "difficulty"
+        columns = [{"name": "Легкая", "wip_limit": 0}, {"name": "Средняя", "wip_limit": 0},
+                   {"name": "Сложная", "wip_limit": 0}]
         tasks_by_column = {"Легкая": [], "Средняя": [], "Сложная": []}
         for task in tasks:
             key = format_difficulty(task.difficulty)
@@ -794,7 +1184,11 @@ def task_board():
                 tasks_by_column[key].append(task)
             else:
                 tasks_by_column["Средняя"].append(task)
+        for col in tasks_by_column:
+            if sort_by == 'utility':
+                tasks_by_column[col].sort(key=lambda t: getattr(t, 'utility', 0), reverse=True)
         column_counts = {col["name"]: len(tasks_by_column[col["name"]]) for col in columns}
+
     users = User.query.all()
     return render_template(
         "task_board.html",
@@ -805,6 +1199,7 @@ def task_board():
         project_id=project_id,
         users=users,
         now=datetime.utcnow(),
+        sort_by=sort_by
     )
 
 
@@ -947,7 +1342,8 @@ def download_report():
     else:
         uid = current_user.id
     tasks = (
-        Task.query.filter((Task.user_id == uid) | (Task.assigned_to_id == uid)).filter(Task.due_date.between(start, end)).all()
+        Task.query.filter((Task.user_id == uid) | (Task.assigned_to_id == uid)).filter(
+            Task.due_date.between(start, end)).all()
     )
     metrics = calculate_kanban_metrics(tasks)
     wb = Workbook()
@@ -993,7 +1389,8 @@ def download_all_kpis():
         )
         m = calculate_kanban_metrics(tasks)
         data.append(
-            {"user": u.username, "lead": m["lead_time_avg"], "cycle": m["cycle_time_avg"], "throughput": m["throughput"]}
+            {"user": u.username, "lead": m["lead_time_avg"], "cycle": m["cycle_time_avg"],
+             "throughput": m["throughput"]}
         )
     wb = Workbook()
     ws = wb.active
@@ -1016,7 +1413,8 @@ def download_all_kpis():
     wb.save(out)
     out.seek(0)
     return send_file(
-        out, as_attachment=True, download_name=f'all_kpis_{start.strftime("%Y-%m-%d")}_to_{end.strftime("%Y-%m-%d")}.xlsx'
+        out, as_attachment=True,
+        download_name=f'all_kpis_{start.strftime("%Y-%m-%d")}_to_{end.strftime("%Y-%m-%d")}.xlsx'
     )
 
 
@@ -1249,7 +1647,8 @@ def delete_reminder(reminder_id):
 @app.route("/projects")
 @login_required
 def projects():
-    projs = Project.query.filter((Project.owner_id == current_user.id) | (Project.members.any(id=current_user.id))).all()
+    projs = Project.query.filter(
+        (Project.owner_id == current_user.id) | (Project.members.any(id=current_user.id))).all()
     return render_template("projects.html", projects=projs)
 
 
@@ -1257,7 +1656,8 @@ def projects():
 @login_required
 def create_project():
     if request.method == "POST":
-        p = Project(name=request.form["name"], description=request.form.get("description", ""), owner_id=current_user.id)
+        p = Project(name=request.form["name"], description=request.form.get("description", ""),
+                    owner_id=current_user.id)
         db.session.add(p)
         db.session.commit()
         flash("Проект создан!", "success")
@@ -1492,7 +1892,226 @@ def create_user_admin():
     return render_template("admin_create_user.html", roles=Role.query.all())
 
 
-# ------------------ ИНИЦИАЛИЗАЦИЯ КОЛОНОК КАНБАН ------------------
+# ================= [PROCESS MINING] МАРШРУТЫ =================
+@app.route('/process_mining')
+@login_required
+def process_mining():
+    if current_user.role.role_name == 'Admin':
+        events = get_task_event_log()
+    else:
+        events = get_task_event_log(user_id=current_user.id)
+
+    metrics = compute_process_metrics(events)
+    transitions = metrics['transitions']
+
+    regress_tasks = set()
+    for ev in events:
+        if ev.get('from_status') == 'Review' and ev.get('to_status') == 'In Progress':
+            regress_tasks.add(ev['title'])
+    regress_count = len(regress_tasks)
+
+    recommendations = generate_recommendations(metrics, transitions, regress_count)
+
+    return render_template('process_mining.html',
+                           metrics=metrics,
+                           transitions=transitions,
+                           regress_count=regress_count,
+                           recommendations=recommendations)
+
+
+@app.route('/export_event_log')
+@login_required
+def export_event_log():
+    import csv
+    from io import StringIO
+
+    if current_user.role.role_name == 'Admin':
+        events = get_task_event_log()
+    else:
+        events = get_task_event_log(user_id=current_user.id)
+
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['task_id', 'title', 'timestamp', 'from_status', 'to_status', 'user'])
+    for ev in events:
+        writer.writerow([ev['task_id'], ev['title'], ev['timestamp'], ev['from_status'], ev['to_status'], ev['user']])
+
+    response = app.response_class(
+        response=output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=event_log.csv'}
+    )
+    return response
+
+
+@app.route('/process_mining_graph.png')
+@login_required
+def process_mining_graph():
+    if current_user.role.role_name == 'Admin':
+        events = get_task_event_log()
+    else:
+        events = get_task_event_log(user_id=current_user.id)
+    metrics = compute_process_metrics(events)
+    transitions = metrics['transitions']
+
+    img_path = generate_transition_graph(transitions)
+    if img_path is None:
+        return '', 204
+    return send_file(img_path, mimetype='image/png', as_attachment=False)
+
+
+@app.route('/api/process_metrics')
+@login_required
+def api_process_metrics():
+    if current_user.role.role_name == 'Admin':
+        events = get_task_event_log()
+        tasks = Task.query.all()
+    else:
+        events = get_task_event_log(user_id=current_user.id)
+        tasks = Task.query.filter((Task.user_id == current_user.id) | (Task.assigned_to_id == current_user.id)).all()
+
+    metrics = compute_process_metrics(events)
+    extended = calculate_extended_metrics(events)
+
+    # Добавляем среднюю полезность и долю высокополезных задач
+    user_weights = get_user_weights(current_user.id)
+    ranked = compute_normalized_utilities(tasks, user_weights)
+    avg_utility = sum(util for _, util, _, _, _ in ranked) / len(ranked) if ranked else 0
+    high_utility_count = sum(1 for _, util, _, _, _ in ranked if util > 0.7)
+
+    return jsonify({
+        'status_durations': metrics['avg_duration_per_status'],
+        'total_tasks': metrics['total_tasks'],
+        'total_events': metrics['total_events'],
+        'lead_time_avg': extended['avg_lead_time_hours'],
+        'cycle_time_avg': extended['avg_cycle_time_hours'],
+        'throughput': extended['throughput_per_day'],
+        'completed_tasks': extended['completed_tasks'],
+        'performer_stats': extended['performer_stats'],
+        'avg_utility': round(avg_utility, 4),
+        'high_utility_tasks_ratio': round(high_utility_count / len(tasks) if tasks else 0, 4)
+    })
+
+
+@app.route('/api/transition_sankey')
+@login_required
+def api_transition_sankey():
+    if current_user.role.role_name == 'Admin':
+        events = get_task_event_log()
+    else:
+        events = get_task_event_log(user_id=current_user.id)
+    metrics = compute_process_metrics(events)
+    sankey = get_sankey_data(metrics['transitions'])
+    return jsonify(sankey)
+
+
+@app.route('/api/timeline_heatmap')
+@login_required
+def api_timeline_heatmap():
+    if current_user.role.role_name == 'Admin':
+        events = get_task_event_log()
+    else:
+        events = get_task_event_log(user_id=current_user.id)
+    timeline = get_timeline_events(events)
+    return jsonify(timeline)
+
+
+# ================= НОВЫЕ API ДЛЯ УПРАВЛЕНИЯ ВЕСАМИ И РАНЖИРОВАНИЯ =================
+@app.route('/api/task_ranking')
+@login_required
+def api_task_ranking():
+    """Возвращает задачи пользователя (или проекта) с рассчитанной полезностью."""
+    project_id = request.args.get('project_id', type=int)
+    query = Task.query
+    if project_id:
+        project = Project.query.get_or_404(project_id)
+        if current_user not in project.members and current_user.id != project.owner_id and current_user.role.role_name != 'Admin':
+            return jsonify({'error': 'Нет доступа'}), 403
+        query = query.filter_by(project_id=project_id)
+    else:
+        query = query.filter((Task.user_id == current_user.id) | (Task.assigned_to_id == current_user.id))
+
+    tasks = query.all()
+    user_weights = get_user_weights(current_user.id)
+    ranked = compute_normalized_utilities(tasks, user_weights)
+    ranked.sort(key=lambda x: x[1], reverse=True)
+    result = []
+    for task, utility, norm_p, norm_d, norm_t in ranked:
+        result.append({
+            'id': task.id,
+            'title': task.title,
+            'status': task.status,
+            'priority': task.priority,
+            'difficulty': task.difficulty,
+            'utility': round(utility, 4),
+            'normalized_priority': round(norm_p, 4),
+            'normalized_difficulty': round(norm_d, 4),
+            'normalized_time': round(norm_t, 4)
+        })
+    return jsonify(result)
+
+
+@app.route('/api/set_weights', methods=['POST'])
+@login_required
+def set_weights():
+    """Установка весов критериев вручную."""
+    data = request.get_json()
+    w_pri = float(data.get('weight_priority', 0.5))
+    w_diff = float(data.get('weight_difficulty', 0.3))
+    w_time = float(data.get('weight_time', 0.2))
+    total = w_pri + w_diff + w_time
+    if total > 0:
+        w_pri /= total
+        w_diff /= total
+        w_time /= total
+    user_weights = get_user_weights(current_user.id)
+    user_weights.weight_priority = w_pri
+    user_weights.weight_difficulty = w_diff
+    user_weights.weight_time = w_time
+    db.session.commit()
+    return jsonify({'status': 'success', 'weights': {'priority': w_pri, 'difficulty': w_diff, 'time': w_time}})
+
+
+@app.route('/api/set_weights_by_ahp', methods=['POST'])
+@login_required
+def set_weights_by_ahp():
+    """Установка весов через матрицу парных сравнений (МАИ)."""
+    data = request.get_json()
+    matrix = data.get('matrix')
+    if not matrix or len(matrix) != 3 or any(len(row) != 3 for row in matrix):
+        return jsonify({'error': 'Матрица должна быть 3x3'}), 400
+    weights, cr = ahp_weights_from_matrix(matrix)
+    user_weights = get_user_weights(current_user.id)
+    user_weights.weight_priority = weights[0]
+    user_weights.weight_difficulty = weights[1]
+    user_weights.weight_time = weights[2]
+    user_weights.ahp_matrix = matrix
+    db.session.commit()
+    return jsonify({
+        'status': 'success',
+        'weights': {'priority': weights[0], 'difficulty': weights[1], 'time': weights[2]},
+        'consistency_ratio': cr
+    })
+
+
+@app.route('/api/get_weights')
+@login_required
+def get_weights():
+    """Возвращает текущие веса пользователя."""
+    uw = get_user_weights(current_user.id)
+    return jsonify({
+        'priority': uw.weight_priority,
+        'difficulty': uw.weight_difficulty,
+        'time': uw.weight_time
+    })
+
+@app.route('/weights_settings')
+@login_required
+def weights_settings():
+    """Страница настройки весов критериев (МАИ и ручная)."""
+    return render_template('weights_settings.html')
+
+# ------------------ ИНИЦИАЛИЗАЦИЯ КОЛОНОК КАНБАН И ВЕСОВ ------------------
 def init_kanban_columns():
     default = [
         {"name": "To Do", "wip_limit": 5, "order": 0},
@@ -1502,18 +2121,22 @@ def init_kanban_columns():
     ]
     for col in default:
         if not KanbanColumn.query.filter_by(name=col["name"], project_id=None).first():
-            db.session.add(KanbanColumn(name=col["name"], wip_limit=col["wip_limit"], order=col["order"], project_id=None))
+            db.session.add(
+                KanbanColumn(name=col["name"], wip_limit=col["wip_limit"], order=col["order"], project_id=None))
     db.session.commit()
 
 
 def init_database():
-    """Создаёт таблицы и инициализирует колонки канбана. Вызывать при старте приложения."""
     with app.app_context():
         db.create_all()
         init_kanban_columns()
+        # Создаём записи весов для существующих пользователей (если нет)
+        for user in User.query.all():
+            if not UserWeight.query.filter_by(user_id=user.id).first():
+                db.session.add(UserWeight(user_id=user.id))
+        db.session.commit()
 
 
-# ------------------ ЗАПУСК ЛОКАЛЬНОГО СЕРВЕРА ------------------
 if __name__ == "__main__":
     init_database()
     app.run(debug=True)

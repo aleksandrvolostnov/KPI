@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+{% block title %}Настройка весов критериев (МАИ){% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+    :root {
+        --bg-color: #0f0f1a;
+        --secondary-bg: #1e1e2a;
+        --accent-color: #A4161A;
+        --hover-color: #2a2a3a;
+        --text-light: #f0f0f0;
+        --text-muted: #aaaaaa;
+        --input-bg: #2a2a3a;
+    }
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-light);
+        font-family: 'Segoe UI', 'Century Gothic', sans-serif;
+    }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid var(--accent-color);
+        padding-bottom: 0.5rem;
+    }
+    .page-header h1 {
+        font-size: 2rem;
+        font-weight: normal;
+        margin: 0;
+    }
+    .card {
+        background: var(--secondary-bg);
+        border-radius: 1.5rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .card h2 {
+        margin-top: 0;
+        font-size: 1.6rem;
+        border-left: 4px solid var(--accent-color);
+        padding-left: 12px;
+        margin-bottom: 1.5rem;
+    }
+    .slider-group {
+        margin-bottom: 1.5rem;
+    }
+    .slider-group label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+    }
+    input[type="range"] {
+        width: 100%;
+        background: var(--input-bg);
+        height: 4px;
+        border-radius: 5px;
+        -webkit-appearance: none;
+    }
+    input[type="range"]:focus {
+        outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--accent-color);
+        cursor: pointer;
+    }
+    .weight-value {
+        font-family: monospace;
+        font-size: 1.2rem;
+        color: var(--accent-color);
+    }
+    .matrix-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+    }
+    .matrix-table th, .matrix-table td {
+        padding: 8px;
+        text-align: center;
+        border-bottom: 1px solid #444;
+    }
+    .matrix-table input {
+        width: 80px;
+        background: var(--input-bg);
+        border: 1px solid #555;
+        color: var(--text-light);
+        padding: 6px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .btn {
+        background-color: var(--accent-color);
+        border: none;
+        color: white;
+        padding: 10px 24px;
+        border-radius: 40px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.2s;
+        margin-top: 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-secondary {
+        background-color: var(--hover-color);
+        border: 1px solid var(--accent-color);
+    }
+    .btn-secondary:hover {
+        background-color: var(--accent-color);
+    }
+    .btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.05);
+    }
+    .alert {
+        background: rgba(164,22,26,0.2);
+        border-left: 4px solid var(--accent-color);
+        padding: 12px;
+        border-radius: 12px;
+        margin: 1rem 0;
+    }
+    .current-weights {
+        background: var(--bg-color);
+        border-radius: 1rem;
+        padding: 1rem;
+        margin-top: 1rem;
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+    }
+    .current-weights span {
+        font-size: 1.2rem;
+    }
+    .current-weights strong {
+        color: var(--accent-color);
+    }
+    .help-text {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-top: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-balance-scale"></i> Веса критериев</h1>
+    <div><i class="fas fa-chart-line"></i> Приоритизация задач по полезности</div>
+</div>
+
+<div class="card">
+    <h2><i class="fas fa-sliders-h"></i> Ручная настройка</h2>
+    <div class="slider-group">
+        <label>Приоритет <span id="prioValue" class="weight-value">0.50</span></label>
+        <input type="range" id="weightPriority" min="0" max="1" step="0.01" value="0.5">
+    </div>
+    <div class="slider-group">
+        <label>Сложность (чем меньше, тем лучше) <span id="diffValue" class="weight-value">0.30</span></label>
+        <input type="range" id="weightDifficulty" min="0" max="1" step="0.01" value="0.3">
+    </div>
+    <div class="slider-group">
+        <label>Время в текущем статусе <span id="timeValue" class="weight-value">0.20</span></label>
+        <input type="range" id="weightTime" min="0" max="1" step="0.01" value="0.2">
+    </div>
+    <button id="saveWeightsBtn" class="btn"><i class="fas fa-save"></i> Сохранить веса</button>
+    <div id="manualFeedback" class="alert" style="display: none;"></div>
+</div>
+
+<div class="card">
+    <h2><i class="fas fa-chart-pie"></i> Метод аналитической иерархии (МАИ)</h2>
+    <p>Заполните матрицу парных сравнений критериев по шкале Саати (1 — равная важность, 3 — умеренное, 5 — сильное, 7 — очень сильное, 9 — абсолютное). Обратные значения — дроби (например, 1/3).</p>
+    <table class="matrix-table" id="ahpMatrix">
+        <tr><th></th><th>Приоритет</th><th>Сложность</th><th>Время</th></tr>
+        <tr><th>Приоритет</th><td><input type="text" id="m11" value="1" class="matrix-cell"></td><td><input type="text" id="m12" value="3" class="matrix-cell"></td><td><input type="text" id="m13" value="5" class="matrix-cell"></td></tr>
+        <tr><th>Сложность</th><td><input type="text" id="m21" value="1/3" class="matrix-cell"></td><td><input type="text" id="m22" value="1" class="matrix-cell"></td><td><input type="text" id="m23" value="2" class="matrix-cell"></td></tr>
+        <tr><th>Время</th><td><input type="text" id="m31" value="1/5" class="matrix-cell"></td><td><input type="text" id="m32" value="1/2" class="matrix-cell"></td><td><input type="text" id="m33" value="1" class="matrix-cell"></td></tr>
+    </table>
+    <button id="calcAhpBtn" class="btn btn-secondary"><i class="fas fa-calculator"></i> Рассчитать веса по МАИ</button>
+    <div id="ahpResult" class="alert" style="display: none;"></div>
+    <button id="saveAhpBtn" class="btn" style="display: none;"><i class="fas fa-check-circle"></i> Применить веса из МАИ</button>
+</div>
+
+<div class="card">
+    <h2><i class="fas fa-weight-hanging"></i> Текущие веса</h2>
+    <div id="currentWeightsDisplay" class="current-weights">
+        <span><strong>Приоритет:</strong> <span id="curPrio">--</span></span>
+        <span><strong>Сложность:</strong> <span id="curDiff">--</span></span>
+        <span><strong>Время:</strong> <span id="curTime">--</span></span>
+    </div>
+</div>
+
+<script>
+    // Загружаем текущие веса
+    async function loadCurrentWeights() {
+        try {
+            const res = await fetch('/api/get_weights');
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            document.getElementById('curPrio').innerText = data.priority.toFixed(2);
+            document.getElementById('curDiff').innerText = data.difficulty.toFixed(2);
+            document.getElementById('curTime').innerText = data.time.toFixed(2);
+            // установим слайдеры
+            document.getElementById('weightPriority').value = data.priority;
+            document.getElementById('weightDifficulty').value = data.difficulty;
+            document.getElementById('weightTime').value = data.time;
+            updateSliderLabels();
+        } catch(e) {
+            document.getElementById('currentWeightsDisplay').innerHTML = '<span>Не удалось загрузить веса</span>';
+        }
+    }
+
+    function updateSliderLabels() {
+        const p = parseFloat(document.getElementById('weightPriority').value);
+        const d = parseFloat(document.getElementById('weightDifficulty').value);
+        const t = parseFloat(document.getElementById('weightTime').value);
+        document.getElementById('prioValue').innerText = p.toFixed(2);
+        document.getElementById('diffValue').innerText = d.toFixed(2);
+        document.getElementById('timeValue').innerText = t.toFixed(2);
+    }
+
+    document.getElementById('weightPriority').addEventListener('input', updateSliderLabels);
+    document.getElementById('weightDifficulty').addEventListener('input', updateSliderLabels);
+    document.getElementById('weightTime').addEventListener('input', updateSliderLabels);
+
+    document.getElementById('saveWeightsBtn').addEventListener('click', async () => {
+        const p = parseFloat(document.getElementById('weightPriority').value);
+        const d = parseFloat(document.getElementById('weightDifficulty').value);
+        const t = parseFloat(document.getElementById('weightTime').value);
+        const payload = { weight_priority: p, weight_difficulty: d, weight_time: t };
+        try {
+            const res = await fetch('/api/set_weights', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            const feedback = document.getElementById('manualFeedback');
+            if (res.ok) {
+                feedback.style.display = 'block';
+                feedback.innerHTML = '<i class="fas fa-check-circle"></i> Веса успешно сохранены!';
+                feedback.style.borderLeftColor = '#2ecc71';
+                loadCurrentWeights();
+            } else {
+                feedback.style.display = 'block';
+                feedback.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Ошибка: ' + (data.error || 'неизвестная');
+                feedback.style.borderLeftColor = '#e74c3c';
+            }
+            setTimeout(() => { feedback.style.display = 'none'; }, 3000);
+        } catch(e) {
+            console.error(e);
+        }
+    });
+
+    // МАИ: парсинг дробей
+    function parseFraction(value) {
+        value = value.trim();
+        if (value.includes('/')) {
+            let parts = value.split('/');
+            if (parts.length === 2) {
+                let num = parseFloat(parts[0]);
+                let den = parseFloat(parts[1]);
+                return num / den;
+            }
+        }
+        return parseFloat(value);
+    }
+
+    function getMatrixFromInputs() {
+        return [
+            [parseFraction(document.getElementById('m11').value), parseFraction(document.getElementById('m12').value), parseFraction(document.getElementById('m13').value)],
+            [parseFraction(document.getElementById('m21').value), parseFraction(document.getElementById('m22').value), parseFraction(document.getElementById('m23').value)],
+            [parseFraction(document.getElementById('m31').value), parseFraction(document.getElementById('m32').value), parseFraction(document.getElementById('m33').value)]
+        ];
+    }
+
+    document.getElementById('calcAhpBtn').addEventListener('click', async () => {
+        const matrix = getMatrixFromInputs();
+        // базовая валидация
+        for (let i=0;i<3;i++) {
+            for (let j=0;j<3;j++) {
+                if (isNaN(matrix[i][j]) || matrix[i][j] <= 0) {
+                    alert('Все значения должны быть положительными числами или дробями (например, 1/3)');
+                    return;
+                }
+            }
+        }
+        const payload = { matrix: matrix };
+        try {
+            const res = await fetch('/api/set_weights_by_ahp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            const resultDiv = document.getElementById('ahpResult');
+            const saveBtn = document.getElementById('saveAhpBtn');
+            if (res.ok) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `<i class="fas fa-chart-line"></i> Рассчитанные веса: <strong>Приоритет=${data.weights.priority.toFixed(3)}</strong>, Сложность=${data.weights.difficulty.toFixed(3)}, Время=${data.weights.time.toFixed(3)}<br>
+                                       Коэффициент согласованности CR = ${data.consistency_ratio.toFixed(4)} ${data.consistency_ratio > 0.1 ? '(высокий, матрица может быть несогласованной)' : '(приемлемый)'}`;
+                resultDiv.style.borderLeftColor = '#f39c12';
+                saveBtn.style.display = 'inline-flex';
+                saveBtn.onclick = () => {
+                    // просто перезагрузим веса, т.к. они уже сохранены на бэке
+                    loadCurrentWeights();
+                    resultDiv.style.display = 'none';
+                    saveBtn.style.display = 'none';
+                    const manualFeedback = document.getElementById('manualFeedback');
+                    manualFeedback.style.display = 'block';
+                    manualFeedback.innerHTML = '<i class="fas fa-check-circle"></i> Веса из МАИ применены!';
+                    manualFeedback.style.borderLeftColor = '#2ecc71';
+                    setTimeout(() => { manualFeedback.style.display = 'none'; }, 3000);
+                };
+            } else {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка: ${data.error || 'не удалось рассчитать'}`;
+                resultDiv.style.borderLeftColor = '#e74c3c';
+                saveBtn.style.display = 'none';
+            }
+        } catch(e) {
+            console.error(e);
+            alert('Ошибка соединения');
+        }
+    });
+
+    loadCurrentWeights();
+</script>
+{% endblock %}

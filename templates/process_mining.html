@@ -1,0 +1,609 @@
+{% extends 'base.html' %}
+{% block title %}Process Mining — аналитика потока задач{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+    :root {
+        --bg-color: #0f0f1a;
+        --secondary-bg: #1e1e2a;
+        --accent-color: #A4161A;
+        --hover-color: #2a2a3a;
+        --text-light: #f0f0f0;
+        --text-muted: #aaaaaa;
+    }
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-light);
+        font-family: 'Segoe UI', 'Century Gothic', sans-serif;
+    }
+    .mining-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--accent-color);
+    }
+    .mining-header h1 {
+        font-size: 2rem;
+        font-weight: normal;
+        margin: 0;
+        color: var(--text-light);
+    }
+    .export-btn {
+        background-color: var(--secondary-bg);
+        color: var(--text-light);
+        padding: 0.6rem 1.2rem;
+        border-radius: 30px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--accent-color);
+    }
+    .export-btn:hover {
+        background-color: var(--accent-color);
+        color: #fff;
+        transform: translateY(-2px);
+    }
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: var(--secondary-bg);
+        border-radius: 1.5rem;
+        padding: 1.2rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s;
+        border-left: 5px solid var(--accent-color);
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+    }
+    .stat-card i {
+        font-size: 2rem;
+        color: var(--accent-color);
+        margin-bottom: 0.5rem;
+    }
+    .stat-card .value {
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--text-light);
+        line-height: 1.2;
+    }
+    .stat-card .label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+    }
+    .mode-switcher {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 2rem;
+    }
+    .mode-btn {
+        background-color: var(--secondary-bg);
+        color: var(--text-light);
+        padding: 8px 20px;
+        border-radius: 40px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+        border: none;
+        font-family: inherit;
+    }
+    .mode-btn i {
+        margin-right: 6px;
+    }
+    .mode-btn.active {
+        background-color: var(--accent-color);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(164,22,26,0.3);
+    }
+    .mode-btn:hover:not(.active) {
+        background-color: var(--hover-color);
+        transform: translateY(-2px);
+        color: #fff;
+    }
+    .chart-container {
+        background: var(--secondary-bg);
+        border-radius: 1.5rem;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .chart-title {
+        font-size: 1.4rem;
+        margin-bottom: 1rem;
+        color: var(--text-light);
+        border-left: 4px solid var(--accent-color);
+        padding-left: 12px;
+    }
+    .chart-title i {
+        margin-right: 8px;
+        color: var(--accent-color);
+    }
+    .recommendation-card {
+        background: var(--secondary-bg);
+        border-radius: 1.2rem;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+        border-left: 6px solid;
+        transition: 0.2s;
+    }
+    .recommendation-card.bottleneck { border-left-color: #e74c3c; }
+    .recommendation-card.quality { border-left-color: #f39c12; }
+    .recommendation-card.long_cycle { border-left-color: #e67e22; }
+    .recommendation-card.review_slow { border-left-color: #f1c40f; }
+    .recommendation-card.good { border-left-color: #2ecc71; }
+    .recommendation-card h4 {
+        margin: 0 0 0.5rem 0;
+        color: var(--text-light);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .recommendation-card p, .recommendation-card small {
+        color: #ccc;
+    }
+    .performer-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .performer-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #444;
+        color: #ddd;
+    }
+    footer {
+        margin-top: 2rem;
+        text-align: center;
+        font-size: 0.75rem;
+        color: #888;
+    }
+    .tab-pane.hidden { display: none; }
+    .text-center { text-align: center; }
+    .p-4 { padding: 1rem; }
+    .p-6 { padding: 1.5rem; }
+    .p-8 { padding: 2rem; }
+
+    /* тултип для графа */
+    .graph-tooltip {
+        position: absolute;
+        background: rgba(0,0,0,0.85);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        pointer-events: none;
+        z-index: 1000;
+        font-family: monospace;
+        border-left: 3px solid var(--accent-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mining-header">
+    <h1><i class="fas fa-chart-network" style="color: var(--accent-color);"></i> Process Mining</h1>
+    <a href="{{ url_for('export_event_log') }}" class="export-btn"><i class="fas fa-download"></i> Экспорт событий (CSV)</a>
+</div>
+
+<div class="stat-grid" id="kpiRow">
+    <div class="stat-card"><i class="fas fa-chart-line"></i><div class="value" id="leadTimeVal">--</div><div class="label">Lead time (средн. ч)</div></div>
+    <div class="stat-card"><i class="fas fa-clock"></i><div class="value" id="cycleTimeVal">--</div><div class="label">Cycle time (ч)</div></div>
+    <div class="stat-card"><i class="fas fa-tachometer-alt"></i><div class="value" id="throughputVal">--</div><div class="label">Throughput (задач/день)</div></div>
+    <div class="stat-card"><i class="fas fa-check-circle"></i><div class="value" id="totalTasksVal">{{ metrics.total_tasks|default(0) }}</div><div class="label">Всего задач</div></div>
+    <div class="stat-card"><i class="fas fa-chart-simple"></i><div class="value" id="avgUtilityVal">--</div><div class="label">Средняя полезность</div></div>
+    <div class="stat-card"><i class="fas fa-star"></i><div class="value" id="highUtilityRatio">--</div><div class="label">Высокополезные (%)</div></div>
+</div>
+
+<div class="mode-switcher">
+    <button class="mode-btn active" data-tab="flow"><i class="fas fa-project-diagram"></i> Граф потока</button>
+    <button class="mode-btn" data-tab="timing"><i class="fas fa-chart-simple"></i> Анализ времени</button>
+    <button class="mode-btn" data-tab="sankey"><i class="fas fa-stream"></i> Sankey‑диаграмма</button>
+    <button class="mode-btn" data-tab="recommend"><i class="fas fa-lightbulb"></i> Рекомендации</button>
+</div>
+
+<!-- Дополнительный переключатель типов графа (появляется только во вкладке flow) -->
+<div id="layout-switch" style="display: flex; gap: 12px; margin-bottom: 1rem;">
+    <button id="btn-fixed" class="mode-btn active"><i class="fas fa-arrows-alt"></i> Логичный порядок</button>
+    <button id="btn-force" class="mode-btn"><i class="fas fa-random"></i> Силовой layout</button>
+</div>
+
+<div id="tab-flow" class="tab-pane active">
+    <div class="chart-container">
+        <div class="chart-title"><i class="fas fa-share-alt"></i> Граф переходов между статусами</div>
+        <div id="forceGraph" style="min-height: 500px; width: 100%;"></div>
+    </div>
+</div>
+
+<div id="tab-timing" class="tab-pane hidden">
+    <div class="stat-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="chart-container">
+            <div class="chart-title"><i class="fas fa-hourglass-half"></i> Среднее время в статусах</div>
+            <canvas id="durationChart" height="300" width="100%"></canvas>
+        </div>
+        <div class="chart-container">
+            <div class="chart-title"><i class="fas fa-users"></i> Производительность исполнителей</div>
+            <div id="performerList" class="performer-list">Загрузка...</div>
+        </div>
+    </div>
+</div>
+
+<div id="tab-sankey" class="tab-pane hidden">
+    <div class="chart-container">
+        <div class="chart-title"><i class="fas fa-stream"></i> Sankey‑диаграмма потока задач</div>
+        <div id="sankeyChart" style="min-height: 500px; width: 100%;"></div>
+    </div>
+</div>
+
+<div id="tab-recommend" class="tab-pane hidden">
+    <div id="recommendationsBlock"></div>
+</div>
+
+<footer>
+    <i class="fas fa-chart-network"></i> Аналитика на основе истории задач · Процессный интеллект
+</footer>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-3.1.0.min.js" charset="utf-8"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Данные из сервера
+    const initialMetrics = {{ metrics|tojson|safe }};
+    let transitionsData = initialMetrics.transitions || [];
+    let statusDuration = initialMetrics.avg_duration_per_status || {};
+    let recommendationsList = {{ recommendations|tojson|safe }};
+
+    let currentLayout = 'fixed';   // 'fixed' или 'force'
+
+    // ---- Функция определения фиксированных позиций (логичный порядок) ----
+    function getFixedPosition(status, index, total) {
+        const order = ['To Do', 'In Progress', 'Review', 'Done'];
+        let x;
+        if (order.includes(status)) {
+            const idx = order.indexOf(status);
+            x = 150 + idx * 200;   // 150, 350, 550, 750
+        } else if (status === 'Создание') {
+            x = 50;
+        } else if (status === 'Overdue') {
+            x = 550;
+        } else if (status === 'Blocked') {
+            x = 350;
+        } else {
+            x = 150 + (index % 5) * 120;
+        }
+        let y = 200 + (index % 3) * 60;
+        if (status === 'Overdue') y = 80;
+        if (status === 'Blocked') y = 320;
+        if (status === 'Создание') y = 200;
+        return { x, y };
+    }
+
+    // ---- Основная отрисовка графа ----
+    function renderTransitionGraph(transitions, layoutType = 'fixed') {
+        const container = document.getElementById('forceGraph');
+        if (!transitions.length) {
+            container.innerHTML = '<div class="text-center p-8">Нет данных для графа переходов</div>';
+            return;
+        }
+        const width = container.clientWidth;
+        const height = 500;
+        container.innerHTML = '';
+
+        // Узлы и связи
+        let nodesSet = new Set();
+        transitions.forEach(t => {
+            if(t.from) nodesSet.add(t.from);
+            nodesSet.add(t.to);
+        });
+        let nodes = Array.from(nodesSet).map(name => ({ id: name, name: name }));
+        let links = transitions.map(t => ({ source: t.from, target: t.to, value: t.count }));
+
+        // Степени (для размера узлов)
+        const degree = new Map();
+        links.forEach(l => {
+            degree.set(l.source, (degree.get(l.source) || 0) + l.value);
+            degree.set(l.target, (degree.get(l.target) || 0) + l.value);
+        });
+        const maxDegree = Math.max(...degree.values(), 1);
+
+        // Создаём SVG
+        const svg = d3.select("#forceGraph").append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .style("background", "var(--secondary-bg)")
+            .style("border-radius", "1rem")
+            .style("cursor", "grab");
+
+        const g = svg.append("g");
+        svg.call(d3.zoom().on("zoom", (event) => g.attr("transform", event.transform)));
+
+        // Стрелка на конце ребра
+        svg.append("defs").append("marker")
+            .attr("id", "arrow")
+            .attr("viewBox", "0 0 10 10")
+            .attr("refX", 22)
+            .attr("refY", 5)
+            .attr("markerWidth", 8)
+            .attr("markerHeight", 8)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M 0 0 L 10 5 L 0 10 z")
+            .attr("fill", "#aaa");
+
+        let simulation;
+
+        if (layoutType === 'force') {
+            simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(120).strength(0.5))
+                .force("charge", d3.forceManyBody().strength(-500))
+                .force("center", d3.forceCenter(width/2, height/2));
+        } else {
+            nodes.forEach((node, idx) => {
+                const pos = getFixedPosition(node.name, idx, nodes.length);
+                node.fx = pos.x;
+                node.fy = pos.y;
+            });
+            simulation = d3.forceSimulation(nodes);
+            simulation.stop();
+        }
+
+        // Рёбра
+        const link = g.append("g").selectAll("line")
+            .data(links)
+            .enter().append("line")
+            .attr("stroke", d => {
+                if (d.source === 'Review' && d.target === 'In Progress') return "#e74c3c";
+                if (d.source === 'Done' && d.target !== 'Done') return "#e67e22";
+                return "#88aaff";
+            })
+            .attr("stroke-opacity", 0.8)
+            .attr("stroke-width", d => Math.sqrt(d.value) * 1.5 + 1)
+            .attr("marker-end", "url(#arrow)")
+            .on("mouseover", function(event, d) {
+                d3.select(this).attr("stroke", "#ffaa66").attr("stroke-width", d => Math.sqrt(d.value) * 2.5 + 2);
+                tooltip.html(`<strong>${d.source} → ${d.target}</strong><br/>${d.value} переходов`)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 20) + "px")
+                    .style("display", "block");
+            })
+            .on("mouseout", function() {
+                d3.select(this).attr("stroke", d => {
+                    if (d.source === 'Review' && d.target === 'In Progress') return "#e74c3c";
+                    if (d.source === 'Done' && d.target !== 'Done') return "#e67e22";
+                    return "#88aaff";
+                }).attr("stroke-width", d => Math.sqrt(d.value) * 1.5 + 1);
+                tooltip.style("display", "none");
+            });
+
+        // Узлы
+        const nodeGroup = g.append("g").selectAll("g")
+            .data(nodes)
+            .enter().append("g")
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        nodeGroup.append("circle")
+            .attr("r", d => 12 + (degree.get(d.name) || 0) / maxDegree * 18)
+            .attr("fill", "var(--accent-color)")
+            .attr("stroke", "#fff")
+            .attr("stroke-width", 2)
+            .on("click", function(event, d) {
+                link.attr("stroke-opacity", l => (l.source === d.name || l.target === d.name) ? 1 : 0.15);
+                nodeGroup.selectAll("circle").attr("stroke-width", 2);
+                d3.select(this).attr("stroke-width", 4);
+                setTimeout(() => {
+                    link.attr("stroke-opacity", 0.8);
+                    nodeGroup.selectAll("circle").attr("stroke-width", 2);
+                }, 2000);
+            });
+
+        nodeGroup.append("text")
+            .text(d => d.name)
+            .attr("dy", "0.35em")
+            .attr("text-anchor", "middle")
+            .attr("fill", "#fff")
+            .style("font-size", "11px")
+            .style("font-weight", "bold")
+            .style("pointer-events", "none");
+
+        // Тултип
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "graph-tooltip")
+            .style("display", "none");
+
+        function dragstarted(event, d) {
+            if (!d.fx) simulation.alphaTarget(0.3).restart();
+            event.subject.fx = event.subject.x;
+            event.subject.fy = event.subject.y;
+        }
+        function dragged(event, d) {
+            event.subject.fx = event.x;
+            event.subject.fy = event.y;
+        }
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            if (layoutType === 'fixed') {
+                d.fx = event.x;
+                d.fy = event.y;
+            } else {
+                if (Math.hypot(event.x - d.fx, event.y - d.fy) < 3) {
+                    event.subject.fx = null;
+                    event.subject.fy = null;
+                }
+            }
+        }
+
+        if (layoutType === 'force') {
+            simulation.on("tick", () => {
+                link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+                nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+        } else {
+            nodes.forEach(d => { if (d.fx !== undefined) { d.x = d.fx; d.y = d.fy; } });
+            link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+            nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
+        }
+    }
+
+    // ---- Вспомогательные функции (прочие графики) ----
+    let durationChart = null;
+    function renderDurationChart(durations) {
+        const ctx = document.getElementById('durationChart').getContext('2d');
+        const labels = Object.keys(durations);
+        const values = Object.values(durations);
+        if (durationChart) durationChart.destroy();
+        durationChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: labels, datasets: [{ label: 'Среднее время (часы)', data: values, backgroundColor: '#A4161A', borderRadius: 8 }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#ddd' } } } }
+        });
+    }
+
+    async function renderSankey() {
+        const container = document.getElementById('sankeyChart');
+        container.innerHTML = '<div class="text-center p-6">Загрузка данных...</div>';
+        try {
+            const res = await fetch('/api/transition_sankey');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            if (!data.nodes || data.nodes.length === 0 || !data.links || data.links.length === 0) {
+                container.innerHTML = '<div class="text-center p-6">Нет переходов для Sankey-диаграммы</div>';
+                return;
+            }
+            const nodeNames = data.nodes;
+            const links = data.links.map(l => ({
+                source: nodeNames.indexOf(l.source),
+                target: nodeNames.indexOf(l.target),
+                value: l.value
+            }));
+            const trace = {
+                type: "sankey",
+                orientation: "horizontal",
+                node: { label: nodeNames, color: "#A4161A", thickness: 30, line: { color: "#444", width: 0.5 } },
+                link: { source: links.map(l => l.source), target: links.map(l => l.target), value: links.map(l => l.value) }
+            };
+            Plotly.newPlot('sankeyChart', [trace], {
+                title: "",
+                paper_bgcolor: "var(--secondary-bg)",
+                plot_bgcolor: "var(--secondary-bg)",
+                font: { color: "#e0e0e0", size: 12 }
+            });
+        } catch (err) {
+            console.error(err);
+            container.innerHTML = `<div class="text-center p-6">Ошибка: ${err.message}</div>`;
+        }
+    }
+
+    async function fetchExtendedMetrics() {
+        try {
+            const resp = await fetch('/api/process_metrics');
+            const data = await resp.json();
+            document.getElementById('leadTimeVal').innerText = data.lead_time_avg ? data.lead_time_avg.toFixed(1) : '0';
+            document.getElementById('cycleTimeVal').innerText = data.cycle_time_avg ? data.cycle_time_avg.toFixed(1) : '0';
+            document.getElementById('throughputVal').innerText = data.throughput ? data.throughput.toFixed(2) : '0';
+            document.getElementById('avgUtilityVal').innerText = data.avg_utility ? data.avg_utility.toFixed(2) : '0';
+            document.getElementById('highUtilityRatio').innerText = data.high_utility_tasks_ratio ? (data.high_utility_tasks_ratio * 100).toFixed(1) + '%' : '0%';
+            if (data.performer_stats && data.performer_stats.length) {
+                let html = '';
+                data.performer_stats.forEach(p => {
+                    html += `<div class="performer-item"><span><i class="fas fa-user-circle"></i> ${p.name}</span><span>${p.avg_time_hours} ч (${p.count} з.)</span></div>`;
+                });
+                document.getElementById('performerList').innerHTML = html;
+            } else {
+                document.getElementById('performerList').innerHTML = '<div class="performer-item">Нет завершённых задач</div>';
+            }
+        } catch(e) { console.warn(e); }
+    }
+
+    function renderRecommendations() {
+        const container = document.getElementById('recommendationsBlock');
+        if (!recommendationsList.length) {
+            container.innerHTML = '<div class="chart-container"><div class="chart-title">Нет рекомендаций</div><p>Накопите больше данных о переходах задач.</p></div>';
+            return;
+        }
+        let html = '';
+        recommendationsList.forEach(rec => {
+            let typeClass = '';
+            let icon = 'fa-lightbulb';
+            if (rec.type === 'bottleneck') { typeClass = 'bottleneck'; icon = 'fa-exclamation-triangle'; }
+            else if (rec.type === 'quality') { typeClass = 'quality'; icon = 'fa-check-double'; }
+            else if (rec.type === 'long_cycle') { typeClass = 'long_cycle'; icon = 'fa-hourglass-end'; }
+            else if (rec.type === 'review_slow') { typeClass = 'review_slow'; icon = 'fa-clock'; }
+            else if (rec.type === 'good') { typeClass = 'good'; icon = 'fa-star'; }
+            html += `<div class="recommendation-card ${typeClass}">
+                        <h4><i class="fas ${icon}"></i> ${rec.title}</h4>
+                        <p>${rec.message}</p>
+                        <small><i class="fas fa-wrench"></i> ${rec.action}</small>
+                     </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function setupTabs() {
+        const btns = document.querySelectorAll('.mode-btn[data-tab]');
+        const panes = document.querySelectorAll('.tab-pane');
+        btns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.getAttribute('data-tab');
+                btns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                panes.forEach(pane => pane.classList.add('hidden'));
+                document.getElementById(`tab-${target}`).classList.remove('hidden');
+
+                if (target === 'sankey') renderSankey();
+                if (target === 'flow' && transitionsData.length) {
+                    renderTransitionGraph(transitionsData, currentLayout);
+                }
+            });
+        });
+    }
+
+    // Инициализация при загрузке
+    window.addEventListener('load', () => {
+        if (transitionsData.length) {
+            renderTransitionGraph(transitionsData, currentLayout);
+        } else {
+            document.getElementById('forceGraph').innerHTML = '<div class="text-center p-8">Нет переходов между статусами</div>';
+        }
+        renderDurationChart(statusDuration);
+        fetchExtendedMetrics();
+        renderRecommendations();
+        setupTabs();
+
+        // Переключатель layout
+        const fixedBtn = document.getElementById('btn-fixed');
+        const forceBtn = document.getElementById('btn-force');
+        fixedBtn.addEventListener('click', () => {
+            currentLayout = 'fixed';
+            renderTransitionGraph(transitionsData, 'fixed');
+            fixedBtn.classList.add('active');
+            forceBtn.classList.remove('active');
+        });
+        forceBtn.addEventListener('click', () => {
+            currentLayout = 'force';
+            renderTransitionGraph(transitionsData, 'force');
+            forceBtn.classList.add('active');
+            fixedBtn.classList.remove('active');
+        });
+    });
+</script>
+{% endblock %}
