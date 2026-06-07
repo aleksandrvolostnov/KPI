@@ -7,3 +7,4 @@ openpyxl
 Babel
 Werkzeug
 gunicorn
+matplotlib
